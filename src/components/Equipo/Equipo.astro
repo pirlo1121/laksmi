@@ -1,26 +1,38 @@
 ---
-import { Image, Picture } from 'astro:assets';
+import { getImage, Image } from 'astro:assets';
 import poster from '../../assets/brand/poster-socios-v4.jpg';
 import { equipo } from '../../data/equipo';
+import Yantra from '../Yantra.astro';
 import PerfilPanel from './PerfilPanel.astro';
+
+// El video de los socios (1280×720, 4.4 s, bucle limpio). El póster es su primer cuadro.
+const posterImg = await getImage({ src: poster, format: 'webp', width: 1280 });
 
 const conBio = equipo.filter((m) => m.bio.length > 0);
 ---
 
 <section class="equipo" id="equipo" aria-labelledby="equipo-title" data-equipo>
   <div class="equipo__hero">
-    <div class="equipo__poster" aria-hidden="true">
-      <Picture
-        src={poster}
-        formats={['avif', 'webp']}
-        widths={[640, 1280]}
-        sizes="100vw"
-        alt=""
-        loading="lazy"
-        class="equipo__poster-img"
-      />
+    <!-- Transición "la puerta se abre": el marco arranca recortado sobre el yantra del video y se abre. -->
+    <div class="equipo__frame" aria-hidden="true" data-equipo-frame>
+      <video
+        class="equipo__video"
+        muted
+        loop
+        playsinline
+        preload="none"
+        poster={posterImg.src}
+        width="1280"
+        height="720"
+        data-equipo-video
+      >
+        <source src="/video/socios-v4.mp4" type="video/mp4" />
+      </video>
+      <div class="equipo__shade"></div>
     </div>
-    <div class="equipo__shade" aria-hidden="true"></div>
+    <div class="equipo__gate" aria-hidden="true" data-equipo-gate>
+      <Yantra class="equipo__gate-yantra" />
+    </div>
     <header class="equipo__head container">
       <p class="eyebrow">Quiénes están de su lado</p>
       <h2 class="display equipo__title" id="equipo-title">
@@ -91,15 +103,31 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
     display: flex;
     align-items: flex-end;
   }
-  .equipo__poster {
+  .equipo__frame {
     position: absolute;
-    inset: -10% 0;
+    inset: 0;
+    overflow: hidden;
   }
-  .equipo__poster :global(picture),
-  .equipo__poster :global(img) {
+  .equipo__video {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: 50% 50%;
+  }
+  /* Yantra de la marca que se posa sobre el yantra del video al empezar la transición. */
+  .equipo__gate {
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  .equipo__gate :global(.equipo__gate-yantra) {
+    width: 100%;
+    height: 100%;
+    color: var(--sand);
+    --yantra-stroke: 1.5px;
+    filter: drop-shadow(0 0 8px rgba(241, 209, 152, 0.35));
   }
   .equipo__shade {
     position: absolute;
@@ -209,11 +237,19 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   }
 
   @media (max-width: 767px) {
+    /* Móvil: el video completo en 16:9 (se ven los dos socios) y el título debajo. */
     .equipo__hero {
-      height: 70svh;
+      height: auto;
+      min-height: 0;
+      display: block;
     }
-    .equipo__poster {
-      inset: 0;
+    .equipo__frame {
+      position: relative;
+      aspect-ratio: 16 / 9;
+    }
+    .equipo__head {
+      padding-top: 2rem;
+      padding-bottom: 0;
     }
     .equipo__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -238,6 +274,25 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   let current: { btn: HTMLButtonElement; panel: HTMLElement } | null = null;
 
   const isMobile = () => window.matchMedia(BP.mobile).matches;
+
+  /* ---- Video de los socios: solo corre visible y sin reduced-motion ---- */
+  const VIDEO = { w: 1280, h: 720 };
+  // Caja del yantra luminoso dentro del cuadro del video (fracciones del ancho/alto).
+  const YANTRA_BOX = { x0: 0.345, x1: 0.65, y0: 0.17, y1: 0.7 };
+  const video = root.querySelector<HTMLVideoElement>('[data-equipo-video]')!;
+  if (!prefersReducedMotion()) {
+    new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.preload = 'auto';
+          void video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { rootMargin: '200px 0px' },
+    ).observe(video);
+  }
 
   async function animateHeight(panel: HTMLElement, open: boolean) {
     if (prefersReducedMotion() || isMobile()) return;
@@ -285,20 +340,60 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   });
 
   scene(5, ({ gsap, c }) => {
-    if (c.reduce) return; // fotos a color, sin parallax ni clip-path
+    if (c.reduce) return; // póster fijo, fotos a color, sin clip-path
 
-    // La única parallax del sitio (solo desktop).
-    if (c.desktop) {
-      gsap.fromTo(
-        root.querySelector('.equipo__poster'),
-        { yPercent: -8 },
-        {
-          yPercent: 8,
-          ease: 'none',
-          scrollTrigger: { trigger: root.querySelector('.equipo__hero'), start: 'top bottom', end: 'bottom top', scrub: true },
-        },
-      );
-    }
+    // Transición: el marco empieza recortado justo sobre el yantra del video (la puerta)
+    // y se abre hasta mostrar a los socios. Sigue al scroll, pero sin pin: nunca lo detiene.
+    const hero = root.querySelector<HTMLElement>('.equipo__hero')!;
+    const frame = root.querySelector<HTMLElement>('[data-equipo-frame]')!;
+    const gate = root.querySelector<HTMLElement>('[data-equipo-gate]')!;
+    const gatePaths = gate.querySelectorAll('.y-draw');
+
+    const doorway = () => {
+      const w = frame.clientWidth;
+      const h = frame.clientHeight;
+      const s = Math.max(w / VIDEO.w, h / VIDEO.h); // object-fit: cover
+      const vw = VIDEO.w * s;
+      const vh = VIDEO.h * s;
+      const ox = (w - vw) / 2;
+      const oy = (h - vh) / 2;
+      const left = ox + YANTRA_BOX.x0 * vw;
+      const right = ox + YANTRA_BOX.x1 * vw;
+      const top = oy + YANTRA_BOX.y0 * vh;
+      const bottom = oy + YANTRA_BOX.y1 * vh;
+      return { left, top, width: right - left, height: bottom - top, w, h };
+    };
+    const closed = () => {
+      const d = doorway();
+      return `inset(${d.top}px ${d.w - d.left - d.width}px ${d.h - d.top - d.height}px ${d.left}px round 2px)`;
+    };
+    const placeGate = () => {
+      const d = doorway();
+      const size = Math.max(d.width, d.height);
+      gsap.set(gate, {
+        x: d.left + d.width / 2 - size / 2,
+        y: d.top + d.height / 2 - size / 2,
+        width: size,
+        height: size,
+      });
+    };
+
+    placeGate();
+    gsap.set(gate, { visibility: 'visible' });
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: hero,
+        start: 'top 90%',
+        end: 'top 10%',
+        scrub: 0.6,
+        invalidateOnRefresh: true,
+        onRefresh: placeGate,
+      },
+    });
+    tl.fromTo(frame, { clipPath: closed }, { clipPath: 'inset(0px 0px 0px 0px round 0px)', duration: 0.7, ease: 'power2.inOut' }, 0.3)
+      .fromTo(gatePaths, { drawSVG: '0%' }, { drawSVG: '100%', duration: 0.35, stagger: 0.004 }, 0)
+      .to(gate, { scale: 1.35, autoAlpha: 0, duration: 0.4, ease: 'power1.in' }, 0.4);
 
     revealLines(gsap, root.querySelector('.equipo__title')!, root.querySelector('.equipo__head')!, 'top 85%');
     gsap.from(root.querySelectorAll('.equipo__head .eyebrow, .equipo__sub'), {
