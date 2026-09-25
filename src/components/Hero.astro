@@ -2,7 +2,6 @@
 import { Picture } from 'astro:assets';
 import bogota from '../assets/brand/bogota-hd.jpg';
 import { site } from '../data/site';
-import Yantra from './Yantra.astro';
 
 // Foto: Dan Gold, «Bogotá city night desde Monserrate» — CC BY-SA 4.0, Wikimedia Commons (original 5506×3098).
 const title = 'LAKSMI';
@@ -25,20 +24,6 @@ const title = 'LAKSMI';
       />
       <div class="hero__overlay"></div>
       <div class="hero__shade"></div>
-    </div>
-
-    <!-- Yantra en profundidad: un plano inclinado lejos, detrás del título (eje Z). -->
-    <div class="hero__yantra-wrap" aria-hidden="true">
-      <div class="hero__yantra-depth" data-hero-depth>
-        <div class="hero__yantra-tilt" data-hero-tilt>
-          <div class="hero__yantra-spin" data-hero-yantra-root>
-            <div class="hero__glow"></div>
-            <Yantra class="hero__echo hero__echo--2" />
-            <Yantra class="hero__echo hero__echo--1" />
-            <Yantra class="hero__yantra" data-hero-yantra="" />
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="hero__content container">
@@ -105,76 +90,6 @@ const title = 'LAKSMI';
     inset: 0;
     background: var(--ink);
     opacity: 0;
-  }
-
-  .hero__yantra-wrap {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    perspective: 1000px;
-    perspective-origin: 50% 30%;
-  }
-  .hero__yantra-depth {
-    position: absolute;
-    left: 77%;
-    top: 66%;
-    width: 60vh;
-    height: 60vh;
-    translate: -50% -50%;
-    transform: translateZ(-420px);
-    transform-style: preserve-3d;
-  }
-  .hero__yantra-tilt {
-    width: 100%;
-    height: 100%;
-    transform: rotateX(64deg);
-    transform-style: preserve-3d;
-  }
-  .hero__yantra-spin {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-  }
-  .hero__yantra-spin > :global(*) {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-  .hero__yantra-spin :global(.hero__yantra) {
-    color: var(--sand);
-    opacity: 0.95;
-    --yantra-stroke: 1.4px;
-    filter: drop-shadow(0 0 6px rgba(241, 209, 152, 0.35));
-  }
-  /* Ecos debajo del plano: le dan grosor, como un sello tallado. */
-  .hero__yantra-spin :global(.hero__echo) {
-    color: var(--sand);
-    --yantra-stroke: 1px;
-  }
-  .hero__yantra-spin :global(.hero__echo--1) {
-    transform: translateZ(-26px);
-    opacity: 0.35;
-  }
-  .hero__yantra-spin :global(.hero__echo--2) {
-    transform: translateZ(-52px);
-    opacity: 0.14;
-  }
-  .hero__glow {
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(241, 209, 152, 0.2) 0%, rgba(241, 209, 152, 0.06) 40%, transparent 68%);
-    transform: translateZ(-70px) scale(1.5);
-  }
-  /* Con JS el yantra espera su entrada (o la llegada del preloader). Salvavidas si el JS falla. */
-  :global(html.js) .hero__yantra-spin {
-    visibility: hidden;
-    animation: hero-yantra-failsafe 0s 8s forwards;
-  }
-  @keyframes hero-yantra-failsafe {
-    to {
-      visibility: visible;
-    }
   }
 
   .hero__content {
@@ -319,13 +234,6 @@ const title = 'LAKSMI';
     .hero__title {
       font-size: 22vw;
     }
-    /* Móvil: el plano flota en el cielo, sobre el título. */
-    .hero__yantra-depth {
-      left: 50%;
-      top: 27%;
-      width: 44vh;
-      height: 44vh;
-    }
     .hero__phrase {
       bottom: 9.5rem;
       font-size: 6.5vw;
@@ -346,9 +254,6 @@ const title = 'LAKSMI';
   }
 
   @media (prefers-reduced-motion: reduce) {
-    :global(html.js) .hero__yantra-spin {
-      visibility: visible;
-    }
     .hero__cue {
       display: none;
     }
@@ -368,20 +273,13 @@ const title = 'LAKSMI';
   scene(1, ({ gsap, c }) => {
     const img = q('.hero__img');
     const shade = q('.hero__shade');
-    const depth = q('[data-hero-depth]');
-    const tilt = q('[data-hero-tilt]');
-    const spin = q('[data-hero-yantra-root]');
     const fades = qa('[data-hero-fade]');
 
-    /* ---- Reduced motion: yantra 3D estático, solo un fade inicial ---- */
+    /* ---- Reduced motion: solo un fade inicial ---- */
     if (c.reduce) {
       introDone.then(() => gsap.from(hero, { autoAlpha: 0, duration: 0.3 }));
       return;
     }
-
-    const DEPTH = { z: -420, tilt: 64 };
-    gsap.set(depth, { z: DEPTH.z });
-    gsap.set(tilt, { rotationX: DEPTH.tilt, rotationY: 0 });
 
     /* ---- Entrada (timed), una sola vez ---- */
     if (!entrancePlayed) {
@@ -397,41 +295,15 @@ const title = 'LAKSMI';
         tl.to(chars, { yPercent: 0, duration: 1.2, stagger: 0.04 }, 0.15)
           .to(light, { clipPath: 'inset(0 0% 0 0)', duration: 1.2 }, 0.45)
           .to(fades, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.08 }, 0.6);
-        // Ya dentro del portal, el yantra del hero llega desde el fondo mientras se traza.
-        tl.set(spin, { visibility: 'visible' }, 0)
-          .fromTo(depth, { z: -2200 }, { z: DEPTH.z, duration: 2.4, ease: 'expo.out' }, 0.2)
-          .fromTo(spin.querySelectorAll('.y-draw'), { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.8, ease: 'power2.inOut', stagger: 0.004 }, 0.2);
       });
     }
 
-    // Giro lento y continuo del plano.
-    gsap.to(spin, { rotationZ: 360, duration: 90, ease: 'none', repeat: -1 });
-
-    // Desktop: el plano se inclina un poco siguiendo el mouse.
-    let onMove: ((e: PointerEvent) => void) | null = null;
-    if (c.desktop && window.matchMedia('(pointer: fine)').matches) {
-      const rx = gsap.quickTo(tilt, 'rotationX', { duration: 1.4, ease: 'power3.out' });
-      const ry = gsap.quickTo(tilt, 'rotationY', { duration: 1.4, ease: 'power3.out' });
-      onMove = (e) => {
-        const nx = e.clientX / window.innerWidth - 0.5;
-        const ny = e.clientY / window.innerHeight - 0.5;
-        rx(DEPTH.tilt - ny * 10);
-        ry(nx * 14);
-      };
-      hero.addEventListener('pointermove', onMove);
-    }
-
-    /* ---- Salida: sin pin; la ciudad se acerca y el yantra se hunde en Z ---- */
+    /* ---- Salida: sin pin; la ciudad se acerca y se oscurece ---- */
     const tl = gsap.timeline({
       defaults: { ease: EASE.scrub },
       scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
     });
     tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.2 : 1.1 }, 0);
     tl.fromTo(shade, { opacity: 0 }, { opacity: 0.6 }, 0);
-    tl.fromTo(depth, { z: DEPTH.z, y: 0 }, { z: DEPTH.z - 900, y: c.desktop ? -60 : -30, immediateRender: false }, 0);
-
-    return () => {
-      if (onMove) hero.removeEventListener('pointermove', onMove);
-    };
   });
 </script>

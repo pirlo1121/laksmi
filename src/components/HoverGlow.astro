@@ -1,0 +1,95 @@
+---
+/**
+ * Luz de hover: al pasar el cursor por tarjetas y botones, una luz Sand muy tenue sigue al puntero
+ * dentro del elemento y aviva el borde más cercano. En táctil aparece un instante donde se toca.
+ * Se aplica por selector, sin tocar el marcado de cada componente.
+ */
+---
+
+<style is:global>
+  .hglow {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-out);
+    mix-blend-mode: screen;
+    background: radial-gradient(
+      circle var(--glow-r, 240px) at var(--gx, 50%) var(--gy, 50%),
+      rgba(241, 209, 152, 0.1),
+      rgba(241, 209, 152, 0.03) 45%,
+      transparent 70%
+    );
+  }
+  /* El borde: el mismo foco, más intenso, recortado a 1px de ancho. */
+  .hglow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle calc(var(--glow-r, 240px) * 0.8) at var(--gx, 50%) var(--gy, 50%),
+      rgba(241, 209, 152, 0.55),
+      transparent 70%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+  .is-glow > .hglow {
+    opacity: 1;
+  }
+  .btn > .hglow,
+  .hero__chip > .hglow {
+    --glow-r: 90px;
+  }
+</style>
+
+<script>
+  const SELECTOR = '.door, .card, .miembro__card, .btn, .hero__chip';
+
+  function attach(el: HTMLElement) {
+    if (el.querySelector(':scope > .hglow')) return;
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    const glow = document.createElement('span');
+    glow.className = 'hglow';
+    glow.setAttribute('aria-hidden', 'true');
+    el.append(glow);
+
+    let fade = 0;
+    const place = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--gx', `${e.clientX - r.left}px`);
+      el.style.setProperty('--gy', `${e.clientY - r.top}px`);
+    };
+
+    el.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'touch') return;
+      place(e);
+      el.classList.add('is-glow');
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'touch') place(e);
+    });
+    el.addEventListener('pointerleave', (e) => {
+      if (e.pointerType !== 'touch') el.classList.remove('is-glow');
+    });
+    // Táctil: un destello breve en el punto tocado.
+    el.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') return;
+      place(e);
+      el.classList.add('is-glow');
+      clearTimeout(fade);
+      fade = window.setTimeout(() => el.classList.remove('is-glow'), 650);
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>(SELECTOR).forEach(attach);
+</script>
