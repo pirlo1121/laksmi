@@ -9,8 +9,6 @@ export const EASE = {
 export const DUR = { fast: 0.5, base: 0.9, slow: 1.4 } as const;
 
 export const SCROLL = {
-  heroDesktop: '+=180%', // distancia del pin del hero
-  heroMobile: '+=90%',
   areasPerStep: 100, // vh de scroll por cada área (desktop)
 } as const;
 

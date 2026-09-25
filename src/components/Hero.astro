@@ -42,7 +42,7 @@ const title = 'LAKSMI';
       </h1>
     </div>
 
-    <p class="hero__phrase" data-hero-phrase>{site.fraseHero}</p>
+    <p class="hero__phrase" data-hero-fade>{site.fraseHero}</p>
 
     <div class="hero__bottom container">
       <p class="hero__lema" data-hero-fade>{site.lema}.</p>
@@ -155,20 +155,17 @@ const title = 'LAKSMI';
 
   .hero__phrase {
     position: absolute;
-    left: var(--gutter);
     right: var(--gutter);
-    top: 50%;
-    translate: 0 -50%;
-    margin: 0 auto;
-    max-width: 16ch;
-    text-align: center;
+    bottom: calc(clamp(1.5rem, 4vh, 3rem) + 7.5rem);
+    max-width: 14ch;
+    margin: 0;
+    text-align: right;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 5vw;
-    line-height: 1.02;
+    font-size: clamp(1.25rem, 2.4vw, 2.25rem);
+    line-height: 1.05;
     letter-spacing: -0.02em;
     color: var(--text);
-    visibility: hidden; /* aparece con el scroll; visible en reduced-motion */
   }
 
   .hero__bottom {
@@ -270,7 +267,8 @@ const title = 'LAKSMI';
       height: 28vh;
     }
     .hero__phrase {
-      font-size: 9vw;
+      bottom: 9.5rem;
+      font-size: 6.5vw;
     }
     .hero__lema {
       font-size: 17px;
@@ -288,25 +286,6 @@ const title = 'LAKSMI';
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hero {
-      height: auto;
-      min-height: 100svh;
-    }
-    .hero__stage {
-      min-height: 100svh;
-    }
-    /* Sin scroll animado, la frase queda a la derecha, lejos del título. */
-    .hero__phrase {
-      visibility: visible;
-      top: auto;
-      bottom: calc(clamp(1.5rem, 4vh, 3rem) + 5rem);
-      left: auto;
-      translate: none;
-      max-width: 14ch;
-      margin: 0;
-      text-align: right;
-      font-size: clamp(1.25rem, 2.4vw, 2.25rem);
-    }
     .hero__cue {
       display: none;
     }
@@ -315,8 +294,7 @@ const title = 'LAKSMI';
 
 <script>
   import { introDone, scene } from '../animations/setup';
-  import { EASE, SCROLL } from '../animations/constants';
-  import { split } from '../animations/reveal';
+  import { EASE } from '../animations/constants';
 
   const hero = document.querySelector<HTMLElement>('[data-hero]')!;
   const q = <T extends Element = HTMLElement>(s: string) => hero.querySelector<T>(s)!;
@@ -329,9 +307,6 @@ const title = 'LAKSMI';
     const shade = q('.hero__shade');
     const yantra = q<SVGSVGElement>('[data-hero-yantra]');
     const gates = yantra.querySelectorAll<SVGGElement>('.y-gate');
-    const line1 = q('.hero__line1');
-    const line2 = q('.hero__line2');
-    const phrase = q('[data-hero-phrase]');
     const fades = qa('[data-hero-fade]');
 
     /* ---- Reduced motion: todo visible, solo un fade inicial ---- */
@@ -368,64 +343,23 @@ const title = 'LAKSMI';
       });
     }
 
-    /* ---- Principal (scrub sobre el pin) ---- */
-    const words = split(phrase, 'words', 'hero__word');
-    gsap.set(phrase, { visibility: 'visible' });
-    gsap.set(words, { yPercent: 110, autoAlpha: 0 });
-
+    /* ---- Salida: parallax mientras el hero se va, sin pin (el scroll nunca se detiene) ---- */
     const tl = gsap.timeline({
       defaults: { ease: EASE.scrub },
-      scrollTrigger: {
-        trigger: hero,
-        start: 'top top',
-        end: c.desktop ? SCROLL.heroDesktop : SCROLL.heroMobile,
-        pin: true,
-        scrub: true,
-        anticipatePin: 1,
-        onLeave: () => window.dispatchEvent(new CustomEvent('laksmi:hero-leave')),
-        onEnterBack: () => window.dispatchEvent(new CustomEvent('laksmi:hero-enter')),
-      },
+      scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
     });
-
-    // 0–60%: descenso sobre Bogotá; el overlay se oscurece.
-    tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.25 : 1.12, duration: 60 }, 0);
-    tl.fromTo(shade, { opacity: 0 }, { opacity: 0.6, duration: 60 }, 0);
-
-    // 20–70%: el yantra rota 45° y crece; las puertas se separan del centro.
-    tl.fromTo(yantra, { rotation: 0, scale: 1 }, { rotation: 45, scale: 1.6, duration: 50 }, 20);
+    // Descenso sobre Bogotá; el overlay se oscurece.
+    tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.2 : 1.1 }, 0);
+    tl.fromTo(shade, { opacity: 0 }, { opacity: 0.6 }, 0);
+    // El yantra rota 45° y las puertas se separan del centro.
+    tl.fromTo(yantra, { rotation: 0 }, { rotation: 45 }, 0);
     if (c.desktop) {
       const push = 22; // unidades del viewBox ≈ 8px a este tamaño
       const dir: Record<string, [number, number]> = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
       gates.forEach((g) => {
         const [x, y] = dir[g.dataset.gate!];
-        tl.to(g, { x: x * push, y: y * push, duration: 50 }, 20);
+        tl.to(g, { x: x * push, y: y * push }, 0);
       });
     }
-
-    // 40–80%: el título se separa y se desvanece.
-    tl.to(line1, { yPercent: -40, autoAlpha: 0, duration: 40 }, 40);
-    tl.to(line2, { yPercent: 40, autoAlpha: 0, duration: 40 }, 40);
-    tl.to(fades, { autoAlpha: 0, duration: 15 }, 40);
-
-    // 60–100%: la frase aparece palabra por palabra.
-    tl.to(words, { yPercent: 0, autoAlpha: 1, duration: 8, stagger: 4 }, 60);
-
-    // 88–100%: el yantra se reduce y viaja hacia la esquina donde queda el yantra de progreso.
-    tl.to(
-      yantra,
-      {
-        scale: 0.15,
-        x: () => window.innerWidth / 2 - 46,
-        y: () => window.innerHeight / 2 - 46,
-        autoAlpha: 0,
-        duration: 12,
-        ease: 'power2.in',
-      },
-      88,
-    );
-
-    return () => {
-      gsap.set(phrase, { clearProps: 'visibility' });
-    };
   });
 </script>

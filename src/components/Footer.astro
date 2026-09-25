@@ -7,7 +7,7 @@ const year = new Date().getFullYear();
 ---
 
 <footer class="footer" data-footer>
-  <p class="footer__band" aria-hidden="true"><span data-footer-band>Estamos de su lado</span></p>
+  <p class="footer__band" aria-hidden="true"><span>Estamos de su lado</span></p>
 
   <div class="container">
     <div class="footer__cols">
@@ -85,16 +85,7 @@ const year = new Date().getFullYear();
     text-transform: uppercase;
   }
   .footer__band span {
-    /* Contorno sin relleno; el relleno llega de izquierda a derecha con el scroll. */
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(217, 217, 217, 0.28);
-    background: linear-gradient(var(--brand-white-grey), var(--brand-white-grey)) no-repeat;
-    background-size: var(--fill, 0%) 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-  }
-  :global(html:not(.js)) .footer__band span {
-    --fill: 100%;
+    color: var(--brand-white-grey);
   }
   .footer__cols {
     display: grid;
@@ -171,28 +162,4 @@ const year = new Date().getFullYear();
       padding-bottom: 6rem; /* espacio para el botón flotante */
     }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .footer__band span {
-      --fill: 100%;
-    }
-  }
 </style>
-
-<script>
-  import { scene } from '../animations/setup';
-
-  const band = document.querySelector<HTMLElement>('[data-footer-band]')!;
-
-  scene(8, ({ gsap, c }) => {
-    if (c.reduce) return;
-    gsap.fromTo(
-      band,
-      { '--fill': '0%' },
-      {
-        '--fill': '100%',
-        ease: 'none',
-        scrollTrigger: { trigger: band, start: 'top 90%', end: 'top 45%', scrub: 0.5 },
-      },
-    );
-  });
-</script>
