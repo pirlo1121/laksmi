@@ -1,0 +1,919 @@
+---
+/**
+ * Historia: el hilo dorado (storyboard de 9 escenas, guiado por el scroll).
+ *
+ * Un solo "mundo" SVG recorrido por una cámara virtual:
+ *   origen (x≈0) → obstáculos (900–2300) → orden (2300–3500) → loto (L) → arquitectura alrededor de L.
+ * La cámara sigue la cabeza del hilo, encuadra el loto, entra a su centro, se aleja para mostrar
+ * todo el recorrido y termina en el logo (el yantra, cuyo loto de 8 pétalos es el mismo loto).
+ * Sin JS o con reduced-motion se muestra una versión estática y legible.
+ */
+import Yantra from './Yantra.astro';
+import {
+  BINDU, CIRCLES, GATES, INNER, OUTER, PETAL as Y_PETAL, PETALS as Y_PETALS, TRIANGLES,
+} from '../data/yantra';
+
+/* ---------- utilidades de geometría ---------- */
+const f = (n: number) => Math.round(n * 10) / 10;
+type P = [number, number];
+
+/** Pseudoaleatorio determinista (el dibujo es igual en cada build). */
+function rng(seed: number) {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const rand = rng(7);
+const between = (a: number, b: number) => a + (b - a) * rand();
+
+/** Curva suave (Catmull-Rom → Bézier) que pasa por todos los puntos. */
+function smooth(pts: P[]) {
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] ?? p2;
+    const c1: P = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2: P = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C ${f(c1[0])} ${f(c1[1])} ${f(c2[0])} ${f(c2[1])} ${f(p2[0])} ${f(p2[1])}`;
+  }
+  return d;
+}
+const poly = (pts: P[], close = false) =>
+  'M ' + pts.map(([x, y]) => `${f(x)} ${f(y)}`).join(' L ') + (close ? ' Z' : '');
+
+/* ---------- el hilo ---------- */
+const L: P = [4400, 0]; // centro del loto
+
+// Escenas 1–3: origen, el camino entre obstáculos y la línea limpia del orden.
+const threadA = smooth([
+  [0, 0], [220, -35], [450, 20], [680, -15], [900, 0],
+  [1150, -170], [1450, 170], [1750, -160], [2050, 150], [2300, 0],
+  [2600, 0], [2900, 0], [3200, 0], [3500, 0],
+]);
+
+// Escena 4: el hilo gira sobre sí mismo (espiral hacia el centro) …
+const th0 = -2.55;
+const R0 = 360;
+const sp0: P = [L[0] + R0 * Math.cos(th0), L[1] + R0 * Math.sin(th0)];
+const spiral: P[] = Array.from({ length: 220 }, (_, i) => {
+  const t = i / 219;
+  const r = R0 * (1 - t);
+  const th = th0 + t * 1.6 * Math.PI * 2;
+  return [L[0] + r * Math.cos(th), L[1] + r * Math.sin(th)];
+});
+// El último punto de control sigue la tangente de la espiral: sin quiebre en la unión.
+const threadB = ` C 3800 0 4012 -93 ${f(sp0[0])} ${f(sp0[1])} L ` + spiral.slice(1).map(([x, y]) => `${f(x)} ${f(y)}`).join(' L ');
+
+// … y dibuja curvas suaves: una rosa de 8 lóbulos que sugiere la flor.
+const ROSE = 260;
+const rose: P[] = Array.from({ length: 481 }, (_, i) => {
+  const th = Math.PI / 8 + (i / 480) * Math.PI * 2;
+  const r = ROSE * Math.cos(4 * th);
+  return [L[0] + r * Math.cos(th), L[1] + r * Math.sin(th)];
+});
+const threadC = ' L ' + rose.slice(1).map(([x, y]) => `${f(x)} ${f(y)}`).join(' L ');
+const THREAD = threadA + threadB + threadC;
+
+/* ---------- escena 2: obstáculos ---------- */
+function shards(cx: number, cy: number, n: number, r: number) {
+  return Array.from({ length: n }, () => {
+    const ox = cx + between(-r, r) * 0.6;
+    const oy = cy + between(-r, r) * 0.5;
+    const pts: P[] = Array.from({ length: 3 }, () => [ox + between(-r, r) * 0.55, oy + between(-r, r) * 0.55]);
+    return poly(pts, true);
+  });
+}
+function scribble(cx: number, cy: number, n: number, w: number, h: number) {
+  return poly(Array.from({ length: n }, () => [cx + between(-w, w), cy + between(-h, h)] as P));
+}
+function squares(cx: number, cy: number, n: number) {
+  return Array.from({ length: n }, () => {
+    const s = between(36, 70);
+    const a = between(0, Math.PI / 2);
+    const ox = cx + between(-70, 70);
+    const oy = cy + between(-40, 40);
+    const pts: P[] = [0, 1, 2, 3].map((k) => {
+      const t = a + (k * Math.PI) / 2;
+      return [ox + (s / Math.SQRT2) * Math.cos(t), oy + (s / Math.SQRT2) * Math.sin(t)];
+    });
+    return poly(pts, true);
+  });
+}
+const obstacles = [
+  ...shards(1150, 115, 3, 90),
+  scribble(1450, -125, 14, 120, 70),
+  ...squares(1750, 115, 3),
+  scribble(2050, -120, 10, 100, 60),
+  ...shards(2050, -130, 2, 70),
+];
+const chaosLines = Array.from({ length: 7 }, () => {
+  const cx = between(950, 2250);
+  const cy = between(0, 1) > 0.5 ? between(260, 380) : between(-380, -260);
+  const a = between(-0.9, 0.9);
+  const len = between(120, 260);
+  return poly([
+    [cx - (len / 2) * Math.cos(a), cy - (len / 2) * Math.sin(a)],
+    [cx + (len / 2) * Math.cos(a), cy + (len / 2) * Math.sin(a)],
+  ]);
+});
+
+/* ---------- escena 3: del caos al orden ---------- */
+const fragments = [-300, -240, 240, 300].flatMap((ty) =>
+  [0, 1, 2, 3, 4].map((i) => ({
+    tx: 2450 + i * 250,
+    ty,
+    x: between(2350, 3550),
+    y: between(-380, 380),
+    r: between(-80, 80),
+  })),
+);
+const conceptos = [
+  { t: 'Seguridad', x: 2560, y: -95 },
+  { t: 'Confianza', x: 2830, y: 135 },
+  { t: 'Estrategia', x: 3100, y: -95 },
+  { t: 'Protección', x: 3370, y: 135 },
+];
+
+/* ---------- escena 5: el loto ---------- */
+const PETAL_D = 'M 0 0 C 100 -90 105 -250 0 -340 C -105 -250 -100 -90 0 0 Z';
+const valores = [
+  { t: 'Integridad', rot: 0, x: 0, y: -395 },
+  { t: 'Excelencia', rot: 90, x: 350, y: 80 },
+  { t: 'Justicia', rot: 180, x: 0, y: 430 },
+  { t: 'Prosperidad', rot: 270, x: -350, y: 80 },
+];
+
+/* ---------- escena 7: arquitectura (relativa a L) ---------- */
+const BASE = 150;
+const edificios = [
+  [-860, 70, 210], [-780, 90, 330], [-680, 60, 170], [-610, 110, 270], [-490, 80, 220],
+] as const;
+const edificiosD =
+  `M -900 ${BASE} H -380 ` +
+  edificios.map(([x, w, h]) => `M ${x} ${BASE} V ${BASE - h} H ${x + w} V ${BASE}`).join(' ');
+const ventanasD = edificios
+  .flatMap(([x, w, h]) =>
+    Array.from({ length: Math.floor((h - 50) / 38) }, (_, k) => `M ${x + 14} ${BASE - 30 - k * 38} H ${x + w - 14}`),
+  )
+  .join(' ');
+const documentoD =
+  'M 470 -160 H 650 L 690 -120 V 150 H 470 Z M 650 -160 V -120 H 690 ' +
+  Array.from({ length: 7 }, (_, k) => `M 500 ${-90 + k * 28} H ${k === 6 ? 580 : 660}`).join(' ');
+const diagramaD =
+  'M -70 400 H 70 V 450 H -70 Z M 0 450 V 488 M -200 488 H 200 M -200 488 V 520 M 0 488 V 520 M 200 488 V 520 ' +
+  [-255, -55, 145].map((x) => `M ${x} 520 H ${x + 110} V 564 H ${x} Z`).join(' ');
+const radiales = Array.from({ length: 12 }, (_, i) => {
+  const a = (i * Math.PI) / 6 + Math.PI / 12;
+  return poly([[130 * Math.cos(a), 130 * Math.sin(a)], [820 * Math.cos(a), 820 * Math.sin(a)]]);
+});
+const conectores = [
+  'M 0 0 C -150 0 -250 60 -380 60',
+  'M 0 0 C 180 0 300 -10 470 -10',
+  'M 0 0 C 0 150 0 280 0 400',
+];
+
+/* ---------- polvo de fondo (profundidad) ---------- */
+const polvo = Array.from({ length: 90 }, () => ({ x: between(-700, 5300), y: between(-650, 650), r: between(1.5, 3.5), o: between(0.12, 0.4) }));
+
+/* ---------- textos ---------- */
+const escenas = [
+  'El origen', 'El camino', 'La claridad', 'Nacimiento del loto', 'Apertura', 'El centro', 'Construcción', 'Legado', 'Cierre',
+];
+const LOGO_K = 0.6;
+---
+
+<section class="story" id="historia" aria-labelledby="story-title" data-story>
+  <h2 class="sr-only" id="story-title">Nuestra historia</h2>
+
+  <div class="story__stage">
+    <svg
+      class="story__svg"
+      viewBox="-500 -500 1000 1000"
+      preserveAspectRatio="xMidYMid meet"
+      aria-hidden="true"
+      data-story-svg
+    >
+      <defs>
+        <radialGradient id="story-light">
+          <stop offset="0" stop-color="#fff6e4" stop-opacity="1"></stop>
+          <stop offset="0.25" stop-color="#f1d198" stop-opacity="0.75"></stop>
+          <stop offset="1" stop-color="#f1d198" stop-opacity="0"></stop>
+        </radialGradient>
+        <radialGradient id="story-glow">
+          <stop offset="0" stop-color="#f1d198" stop-opacity="0.55"></stop>
+          <stop offset="1" stop-color="#f1d198" stop-opacity="0"></stop>
+        </radialGradient>
+      </defs>
+
+      <g data-cam>
+        <g class="s-dust" data-dust>
+          {polvo.map((d) => <circle cx={f(d.x)} cy={f(d.y)} r={f(d.r)} opacity={f(d.o * 100) / 100} />)}
+        </g>
+
+        <!-- Escena 2 -->
+        <g class="s-chaos" data-obstacles>
+          {obstacles.map((d) => <path class="s-draw" d={d} />)}
+          {chaosLines.map((d) => <path class="s-draw s-faint" d={d} />)}
+        </g>
+
+        <!-- Escena 3 -->
+        <g class="s-order" data-order>
+          {
+            fragments.map((fr) => (
+              <line
+                class="s-frag"
+                x1="-85"
+                y1="0"
+                x2="85"
+                y2="0"
+                data-frag
+                data-x={f(fr.x)}
+                data-y={f(fr.y)}
+                data-r={f(fr.r)}
+                data-tx={fr.tx}
+                data-ty={fr.ty}
+              />
+            ))
+          }
+          {conceptos.map((c) => <rect class="s-node" x={c.x - 7} y="-7" width="14" height="14" transform={`rotate(45 ${c.x} 0)`} data-node />)}
+          {
+            conceptos.map((c) => (
+              <text class="s-concept" x={c.x} y={c.y} text-anchor="middle" data-concept data-dir={c.y < 0 ? 1 : -1}>
+                {c.t}
+              </text>
+            ))
+          }
+        </g>
+
+        <!-- Escena 7 -->
+        <g class="s-arch" transform={`translate(${L[0]} ${L[1]})`} data-arch>
+          <g class="s-arch__grid">
+            {radiales.map((d) => <path class="s-draw" d={d} />)}
+            <circle class="s-draw" r="560"></circle>
+            <circle class="s-draw" r="760"></circle>
+          </g>
+          <path class="s-draw s-build" d={edificiosD} data-arch-part></path>
+          <path class="s-draw s-faint" d={ventanasD} data-arch-part></path>
+          <path class="s-draw s-build" d={documentoD} data-arch-part></path>
+          <circle class="s-draw s-build" cx="640" cy="110" r="18" data-arch-part></circle>
+          <path class="s-draw s-build" d={diagramaD} data-arch-part></path>
+          {conectores.map((d) => <path class="s-draw s-link" d={d} data-arch-link />)}
+        </g>
+
+        <!-- Escena 5 -->
+        <g class="s-lotus" transform={`translate(${L[0]} ${L[1]})`} data-lotus>
+          {
+            [45, 135, 225, 315].map((rot) => (
+              <g transform={`rotate(${rot})`}>
+                <path class="s-petal s-petal--in" d={PETAL_D} transform="scale(0.62)" data-petal-in />
+              </g>
+            ))
+          }
+          {
+            valores.map((v) => (
+              <g transform={`rotate(${v.rot})`}>
+                <path class="s-petal" d={PETAL_D} data-petal />
+              </g>
+            ))
+          }
+          {
+            valores.map((v) => (
+              <text class="s-value" x={v.x} y={v.y} text-anchor="middle" data-value>
+                {v.t}
+              </text>
+            ))
+          }
+        </g>
+
+        <!-- El hilo -->
+        <path class="s-thread s-thread--glow" d={THREAD} data-thread-glow></path>
+        <path class="s-thread" d={THREAD} data-thread></path>
+        <path class="s-measure" d={threadA} data-thread-a></path>
+        <path class="s-measure" d={threadA + threadB} data-thread-ab></path>
+
+        <!-- Escena 6 -->
+        <circle class="s-light" cx={L[0]} cy={L[1]} r="120" fill="url(#story-light)" data-light></circle>
+
+        <!-- Escena 9: el loto se vuelve el yantra del logo -->
+        <g class="s-logo" transform={`translate(${L[0]} ${L[1]}) scale(${LOGO_K})`} data-logo>
+          <g data-logo-circles>
+            {CIRCLES.map((r) => <circle class="s-draw" r={r} />)}
+          </g>
+          <g data-logo-petals>
+            {Y_PETALS.map((deg) => <path class="s-draw" d={Y_PETAL} transform={`rotate(${deg})`} />)}
+          </g>
+          <g data-logo-tris>
+            {TRIANGLES.map((pts) => <polygon class="s-draw" points={pts} />)}
+            <circle class="s-draw" r={BINDU}></circle>
+          </g>
+          <g data-logo-frame>
+            {
+              GATES.map((g) => (
+                <g transform={g.rot ? `rotate(${g.rot})` : undefined}>
+                  <path class="s-draw" d={OUTER} />
+                  <path class="s-draw" d={INNER} />
+                </g>
+              ))
+            }
+          </g>
+        </g>
+
+        <!-- Escena 1: la partícula (tamaño fijo en pantalla) -->
+        <g data-particle>
+          <g class="s-float">
+            <circle r="26" fill="url(#story-glow)"></circle>
+            <circle class="s-core" r="3.5"></circle>
+          </g>
+        </g>
+      </g>
+    </svg>
+
+    <p class="story__chapter" aria-hidden="true" data-story-chapter>
+      <span data-chapter-num>01</span><span class="story__chapter-sep">/ 09</span><span data-chapter-name
+        >{escenas[0]}</span
+      >
+    </p>
+
+    <div class="story__captions">
+      <p class="story__cap" data-cap>Cada historia comienza con una decisión.</p>
+      <p class="story__cap" data-cap>Incluso en los escenarios más complejos existe un camino.</p>
+      <p class="story__cap" data-cap>Transformamos la complejidad en claridad.</p>
+      <p class="story__cap" data-cap>La solidez nace de una visión clara.</p>
+      <p class="story__cap" data-cap>Protegemos aquello que tiene valor.</p>
+      <p class="story__cap" data-cap>Soluciones legales diseñadas para crecer con usted.</p>
+      <p class="story__cap story__cap--legacy" data-cap>
+        <span data-cap-line>Más que resolver conflictos.</span>
+        <span class="story__cap-strong" data-cap-line>Construimos futuro.</span>
+      </p>
+    </div>
+
+    <ul class="sr-only">
+      {conceptos.map((c) => <li>{c.t}</li>)}
+      {valores.map((v) => <li>{v.t}</li>)}
+    </ul>
+
+    <div class="story__end" data-story-end>
+      <Yantra class="story__static-logo" />
+      <p class="story__brand" aria-label="LAKSMI Abogados">
+        <span class="story__brand-name" aria-hidden="true">LAKSMI</span>
+        <span class="story__brand-sub" aria-hidden="true">Abogados</span>
+      </p>
+      <p class="story__cta-text">Agende una consulta</p>
+      <a class="btn btn--primary story__btn" href="#contacto">
+        Contactar un abogado <span class="arrow">→</span>
+      </a>
+    </div>
+
+    <div class="story__progress" aria-hidden="true"><span data-story-bar></span></div>
+  </div>
+</section>
+
+<style>
+  /* ============ Base (sin JS / reduced-motion): versión estática y legible ============ */
+  .story {
+    position: relative;
+    background: var(--ink);
+    padding: clamp(4rem, 10vw, 8rem) var(--gutter);
+  }
+  .story__stage {
+    position: relative;
+    max-width: var(--maxw);
+    margin-inline: auto;
+  }
+  .story__svg,
+  .story__chapter,
+  .story__progress {
+    display: none;
+  }
+  .story__captions {
+    display: grid;
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+  .story__cap {
+    margin: 0;
+    max-width: 24ch;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3vw, 2.75rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .story__cap--legacy span {
+    display: block;
+  }
+  .story__cap-strong {
+    color: var(--sand);
+  }
+  .story__end {
+    display: grid;
+    justify-items: start;
+    gap: 1rem;
+  }
+  .story :global(.story__static-logo) {
+    width: 120px;
+    height: 120px;
+    color: var(--sand);
+    margin-bottom: 0.5rem;
+  }
+  .story__brand {
+    display: grid;
+    margin: 0;
+    line-height: 0.9;
+  }
+  .story__brand-name {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .story__brand-sub {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(1.75rem, 4.5vw, 4rem);
+    color: var(--sand);
+  }
+  .story__cta-text {
+    margin: 1rem 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .story__btn {
+    margin-top: 0.25rem;
+  }
+
+  /* ============ En vivo: escena fija de pantalla completa ============ */
+  .story.is-live {
+    padding: 0;
+    overflow: hidden;
+  }
+  .story.is-live .story__stage {
+    max-width: none;
+    height: 100vh;
+    height: 100svh;
+  }
+  .story.is-live .story__svg {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .story.is-live :global(.story__static-logo) {
+    display: none;
+  }
+
+  /* Trazos: el grosor (en unidades del mundo) lo fija el JS para que se vea igual en cualquier pantalla. */
+  .story__svg :global(*) {
+    fill: none;
+  }
+  .s-dust circle {
+    fill: var(--brand-white-grey);
+  }
+  .s-chaos .s-draw {
+    stroke: rgba(217, 217, 217, 0.42);
+    stroke-width: var(--sw);
+    stroke-linejoin: round;
+  }
+  .s-chaos .s-faint,
+  .s-arch .s-faint {
+    stroke: rgba(217, 217, 217, 0.18);
+  }
+  .s-frag {
+    stroke: rgba(217, 217, 217, 0.45);
+    stroke-width: var(--sw);
+    stroke-linecap: round;
+  }
+  .s-node {
+    fill: var(--sand) !important;
+  }
+  .s-concept {
+    fill: var(--text) !important;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 40px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .s-value {
+    fill: var(--sand) !important;
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    font-size: 52px;
+    letter-spacing: -0.01em;
+  }
+  .s-petal {
+    stroke: var(--sand);
+    stroke-width: var(--sw2);
+    fill: rgba(241, 209, 152, 0.05) !important;
+  }
+  .s-petal--in {
+    stroke: rgba(241, 209, 152, 0.6);
+  }
+  .s-arch .s-draw {
+    stroke: rgba(217, 217, 217, 0.5);
+    stroke-width: var(--sw);
+  }
+  .s-arch__grid .s-draw {
+    stroke: rgba(91, 124, 168, 0.35);
+  }
+  .s-arch .s-link {
+    stroke: var(--sand);
+    stroke-width: var(--sw2);
+  }
+  .s-thread {
+    stroke: var(--sand);
+    stroke-width: var(--swt);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .s-thread--glow {
+    stroke: rgba(241, 209, 152, 0.16);
+    stroke-width: var(--swg);
+  }
+  .s-measure {
+    visibility: hidden;
+  }
+  .s-light {
+    fill: url(#story-light) !important;
+  }
+  .s-logo .s-draw {
+    stroke: var(--sand);
+    stroke-width: calc(var(--sw2) / 0.6);
+  }
+  .s-core {
+    fill: #fff3dc !important;
+  }
+  [data-particle] circle:first-child {
+    fill: url(#story-glow) !important;
+  }
+  .s-float {
+    animation: s-float 3.2s ease-in-out infinite;
+  }
+  @keyframes s-float {
+    50% {
+      transform: translate(0, -6px);
+    }
+  }
+
+  /* Rótulo de escena y barra de progreso */
+  .story.is-live .story__chapter {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    position: absolute;
+    top: calc(var(--nav-h) + 1.25rem);
+    left: var(--gutter);
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .story__chapter [data-chapter-num] {
+    color: var(--sand);
+  }
+  .story.is-live .story__progress {
+    display: block;
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: 1.5rem;
+    height: 1px;
+    background: var(--line);
+  }
+  .story__progress span {
+    position: absolute;
+    inset: 0;
+    background: var(--sand);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  /* Textos sobre la escena */
+  .story.is-live .story__captions {
+    display: block;
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: clamp(3.5rem, 11vh, 7rem);
+    margin: 0;
+    pointer-events: none;
+  }
+  .story.is-live .story__cap {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    max-width: 18ch;
+    font-size: clamp(1.6rem, 3.3vw, 3.4rem);
+    visibility: hidden;
+    text-shadow: 0 2px 30px rgba(10, 14, 21, 0.9);
+  }
+  .story.is-live .story__end {
+    position: absolute;
+    left: 54%;
+    top: 50%;
+    translate: 0 -50%;
+    gap: 0.9rem;
+    visibility: hidden;
+  }
+
+  @media (max-width: 767px) {
+    .story.is-live .story__cap {
+      max-width: none;
+      font-size: clamp(1.45rem, 6.6vw, 2rem);
+    }
+    .story.is-live .story__captions {
+      bottom: 3.25rem;
+    }
+    .story.is-live .story__end {
+      left: var(--gutter);
+      right: var(--gutter);
+      top: auto;
+      bottom: 3.5rem;
+      translate: none;
+      justify-items: center;
+      text-align: center;
+    }
+    .story.is-live .story__brand {
+      justify-items: center;
+    }
+    .story.is-live .story__brand-name {
+      font-size: 17vw;
+    }
+    .story.is-live .story__brand-sub {
+      font-size: 8.5vw;
+    }
+  }
+</style>
+
+<script>
+  import { scene } from '../animations/setup';
+
+  const root = document.querySelector<HTMLElement>('[data-story]')!;
+  const svg = root.querySelector<SVGSVGElement>('[data-story-svg]')!;
+  const $ = <T extends Element = SVGElement>(s: string) => root.querySelector<T>(s)!;
+  const $$ = <T extends Element = SVGElement>(s: string) => [...root.querySelectorAll<T>(s)];
+
+  const L = { x: 4400, y: 0 };
+  const CHAPTERS = [0, 10, 20, 35, 50, 65, 75, 85, 95];
+  const NAMES = ['El origen', 'El camino', 'La claridad', 'Nacimiento del loto', 'Apertura', 'El centro', 'Construcción', 'Legado', 'Cierre'];
+
+  scene(1.5, ({ gsap, c }) => {
+    if (c.reduce) return; // versión estática
+    root.classList.add('is-live');
+
+    const thread = $<SVGPathElement>('[data-thread]');
+    const glow = $<SVGPathElement>('[data-thread-glow]');
+    const cam = $('[data-cam]');
+    const particle = $('[data-particle]');
+    const chapterNum = $<HTMLElement>('[data-chapter-num]');
+    const chapterName = $<HTMLElement>('[data-chapter-name]');
+    const bar = $<HTMLElement>('[data-story-bar]');
+
+    /* ---- Medidas: unidades visibles y px por unidad (cambian con el tamaño de pantalla) ---- */
+    const view = { w: 1000, h: 1000, ppu: 1 };
+    function measure() {
+      const r = svg.getBoundingClientRect();
+      const aspect = r.width / Math.max(1, r.height);
+      view.w = aspect >= 1 ? 1000 * aspect : 1000;
+      view.h = aspect >= 1 ? 1000 : 1000 / aspect;
+      view.ppu = Math.min(r.width, r.height) / 1000;
+      // Grosor de línea constante en pantalla a escala 1 (luego la cámara lo acerca o aleja).
+      const px = (n: number) => String(n / view.ppu);
+      svg.style.setProperty('--sw', px(1.1));
+      svg.style.setProperty('--sw2', px(1.5));
+      svg.style.setProperty('--swt', px(1.8));
+      svg.style.setProperty('--swg', px(9));
+    }
+    measure();
+    const wide = () => view.w >= view.h;
+
+    // Escalas de cámara de cada encuadre.
+    const S = {
+      follow: () => (wide() ? 1 : 1.25), // en vertical sobra alto: la cámara se acerca un poco más
+      lotus: () => Math.min(view.w, view.h) / 2 / 500,
+      center: () => (Math.min(view.w, view.h) / 2 / 500) * 4.2,
+      arch: () => Math.min(view.w / 2 / 920, view.h / 2 / 640, 0.95),
+      all: () => (wide() ? Math.min(view.w / 5700, view.h / 1500) : view.w / 5000),
+      logo: () => (wide() ? (view.h * 0.5) / 690 : (view.w * 0.66) / 690),
+    };
+
+    /* ---- Largo del hilo y puntos de control ---- */
+    const total = thread.getTotalLength();
+    const lenA = $<SVGPathElement>('[data-thread-a]').getTotalLength();
+    const lenAB = $<SVGPathElement>('[data-thread-ab]').getTotalLength();
+    const atX = (x: number) => {
+      let lo = 0;
+      let hi = lenA;
+      for (let i = 0; i < 30; i++) {
+        const mid = (lo + hi) / 2;
+        if (thread.getPointAtLength(mid).x < x) lo = mid;
+        else hi = mid;
+      }
+      return lo / total;
+    };
+    const P1 = atX(900);
+    const P2 = atX(2300);
+    const P3 = lenA / total;
+    const P4 = lenAB / total;
+
+    /* ---- Estado animado (lo mueve la línea de tiempo; render() lo aplica) ---- */
+    const T = { start: 0, end: 0 }; // tramo visible del hilo (0–1)
+    const C = { x: 0, y: 0, s: S.follow() }; // cámara libre
+    const F = { w: 1, px: 1 }; // w: cuánto sigue la cámara al hilo · px: visibilidad de la partícula
+
+    let lastChapter = -1;
+    function render() {
+      const s0 = T.start * total;
+      const e0 = T.end * total;
+      const dash = `${Math.max(0, e0 - s0)} ${total + 10}`;
+      for (const p of [thread, glow]) {
+        p.style.strokeDasharray = dash;
+        p.style.strokeDashoffset = String(-s0);
+        p.style.strokeOpacity = e0 - s0 < 0.5 ? '0' : ''; // sin el punto que deja un trazo de largo 0
+      }
+      const head = thread.getPointAtLength(e0);
+
+      // La cámara sigue la cabeza del hilo (un poco por delante) y se mezcla con la cámara libre.
+      const s = C.s;
+      const fx = head.x + 150 / s;
+      const cx = C.x + (fx - C.x) * F.w;
+      const cy = C.y + (0 - C.y) * F.w;
+      cam.setAttribute('transform', `scale(${s}) translate(${-cx} ${-cy})`);
+
+      const k = 1 / (s * view.ppu);
+      particle.setAttribute('transform', `translate(${head.x} ${head.y}) scale(${k})`);
+      particle.style.opacity = String(F.px);
+
+      const pct = tl.progress() * 100;
+      bar.style.transform = `scaleX(${tl.progress()})`;
+      let ch = 0;
+      CHAPTERS.forEach((v, i) => pct >= v - 0.01 && (ch = i));
+      if (ch !== lastChapter) {
+        lastChapter = ch;
+        chapterNum.textContent = String(ch + 1).padStart(2, '0');
+        chapterName.textContent = NAMES[ch];
+      }
+    }
+
+    /* ---- Línea de tiempo: 100 unidades = 100 % del storyboard. La escena queda fija y el scroll la recorre. ---- */
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      onUpdate: render,
+      scrollTrigger: {
+        trigger: root,
+        start: 'top top',
+        end: () => `+=${window.innerHeight * (c.desktop ? 10 : 8.5)}`,
+        pin: true,
+        scrub: 0.7,
+        invalidateOnRefresh: true,
+        onRefreshInit: measure,
+      },
+    });
+    tl.set({}, {}, 100);
+
+    const caps = $$<HTMLElement>('[data-cap]');
+    const cap = (el: Element, a: number, b: number) => {
+      tl.fromTo(el, { autoAlpha: 0, y: 26 }, { autoAlpha: 1, y: 0, duration: 1.6, ease: 'power2.out' }, a);
+      tl.to(el, { autoAlpha: 0, y: -18, duration: 1.2, ease: 'power2.in' }, b);
+    };
+    const draw = (targets: Element | Element[], at: number, dur: number, stagger = 0) =>
+      tl.fromTo(targets, { drawSVG: '0%' }, { drawSVG: '100%', duration: dur, stagger, ease: 'power1.inOut' }, at);
+
+    // Escena 1 — El origen (0–10): pantalla oscura, solo la partícula; el polvo aparece con el camino.
+    tl.fromTo($('[data-dust]'), { autoAlpha: 0 }, { autoAlpha: 1, duration: 8 }, 4);
+    tl.to(T, { end: P1, duration: 9.5 }, 0.5);
+    cap(caps[0], 1.5, 8.6);
+
+    // Escena 2 — El camino (10–20)
+    const obs = $$('[data-obstacles] .s-draw');
+    tl.fromTo(obs, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1.5, stagger: 0.35 }, 9.5);
+    draw(obs, 9.5, 3, 0.35);
+    tl.to(T, { end: P2, duration: 10 }, 10);
+    cap(caps[1], 11.2, 18.6);
+
+    // Escena 3 — La claridad (20–35)
+    const frags = $$<SVGLineElement>('[data-frag]');
+    frags.forEach((el) => {
+      const d = el.dataset;
+      tl.fromTo(
+        el,
+        { x: +d.x!, y: +d.y!, rotation: +d.r!, autoAlpha: 0, transformOrigin: '50% 50%' },
+        { autoAlpha: 1, duration: 1.5 },
+        19 + Math.random() * 2,
+      );
+      tl.to(el, { x: +d.tx!, y: +d.ty!, rotation: 0, stroke: 'rgba(241, 209, 152, 0.5)', duration: 7, ease: 'power2.inOut' }, 22 + Math.random() * 2);
+    });
+    tl.to(obs, { autoAlpha: 0.25, duration: 4 }, 21);
+    tl.to(T, { end: P3, duration: 12 }, 20);
+    const nodes = $$('[data-node]');
+    const concepts = $$<SVGTextElement>('[data-concept]');
+    concepts.forEach((el, i) => {
+      const at = 23.5 + i * 2.6;
+      tl.fromTo(nodes[i], { scale: 0, transformOrigin: '50% 50%' }, { scale: 1, duration: 1, ease: 'back.out(2)' }, at - 0.6);
+      tl.fromTo(
+        el,
+        { autoAlpha: 0, y: 70 * +el.dataset.dir!, scale: 0.8, transformOrigin: '50% 50%' },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 2.4, ease: 'power3.out' },
+        at,
+      );
+    });
+    cap(caps[2], 21.5, 33.2);
+
+    // Escena 4 — Nacimiento del loto (35–50): la cámara deja de seguir y encuadra el loto.
+    tl.set(C, { x: L.x, y: L.y }, 34.9);
+    tl.to(F, { w: 0, duration: 7, ease: 'power2.inOut' }, 35);
+    tl.fromTo(C, { s: S.follow }, { s: S.lotus, duration: 8, ease: 'power2.inOut', immediateRender: false }, 36);
+    tl.to(T, { end: P4, duration: 7 }, 35);
+    tl.to(T, { end: 1, duration: 10 }, 42);
+    cap(caps[3], 36.5, 48.6);
+
+    // Escena 5 — Apertura (50–65): el trazo se aquieta y los pétalos se abren uno a uno.
+    tl.to(F, { px: 0, duration: 2 }, 51);
+    tl.to([thread, glow], { opacity: 0.35, duration: 2 }, 52);
+    const petals = $$('[data-petal]');
+    const values = $$('[data-value]');
+    petals.forEach((p, i) => {
+      const at = 52.5 + i * 3;
+      tl.fromTo(p, { scale: 0.05, autoAlpha: 0, transformOrigin: '50% 100%' }, { scale: 1, autoAlpha: 1, duration: 2.6, ease: 'power3.out' }, at);
+      tl.fromTo(values[i], { autoAlpha: 0, scale: 0.85, transformOrigin: '50% 50%' }, { autoAlpha: 1, scale: 1, duration: 2, ease: 'power2.out' }, at + 0.8);
+    });
+    tl.fromTo($$('[data-petal-in]'), { scale: 0, autoAlpha: 0, transformOrigin: '50% 100%' }, { scale: 0.62, autoAlpha: 1, duration: 2.4, stagger: 0.3, ease: 'power3.out' }, 62);
+
+    // Escena 6 — El centro (65–75): zoom al centro, la luz crece y absorbe el hilo.
+    const light = $('[data-light]');
+    tl.to(C, { s: S.center, duration: 6.5, ease: 'power2.in' }, 65);
+    tl.fromTo(light, { scale: 0, autoAlpha: 0, transformOrigin: '50% 50%' }, { scale: 1.6, autoAlpha: 1, duration: 5, ease: 'power2.out' }, 66);
+    tl.to([thread, glow], { opacity: 1, duration: 1 }, 66);
+    tl.to(T, { start: 1, duration: 7, ease: 'power1.in' }, 66);
+    tl.to($$('[data-value]'), { autoAlpha: 0, duration: 2 }, 67);
+    tl.to($$('[data-order], [data-obstacles]'), { autoAlpha: 0.15, duration: 3 }, 67);
+    cap(caps[4], 66.8, 73.6);
+
+    // Escena 7 — Construcción (75–85): desde el centro nacen planos, edificios, documentos, diagramas.
+    tl.to(C, { s: S.arch, duration: 4.5, ease: 'power2.inOut' }, 74.5);
+    tl.to(light, { scale: 0.45, autoAlpha: 0.7, duration: 4 }, 74.5);
+    const arch = $('[data-arch]');
+    tl.set(arch, { autoAlpha: 1 }, 75);
+    draw($$('.s-arch__grid .s-draw'), 75.5, 3.5, 0.12);
+    draw($$('[data-arch-link]'), 76.5, 3, 0.4);
+    draw($$('[data-arch-part]'), 78, 4.5, 0.5);
+    cap(caps[5], 76.8, 84);
+
+    // Escena 8 — Legado (85–95): la cámara se aleja y el hilo recorre de nuevo toda la historia.
+    tl.set(T, { start: 0, end: 0 }, 85);
+    tl.to(C, { x: 2350, y: 0, s: S.all, duration: 4.5, ease: 'power2.inOut' }, 85);
+    tl.to(light, { scale: 0.3, autoAlpha: 0.5, duration: 3 }, 85);
+    tl.to($$('[data-order], [data-obstacles]'), { autoAlpha: 1, duration: 3 }, 85);
+    tl.to(T, { end: 1, duration: 7.5, ease: 'power1.inOut' }, 85.8);
+    tl.to($$('[data-value]'), { autoAlpha: 1, duration: 2 }, 87);
+    const legacy = caps[6];
+    const lines = legacy.querySelectorAll('[data-cap-line]');
+    tl.set(legacy, { autoAlpha: 1 }, 86);
+    tl.fromTo(lines[0], { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 1.6, ease: 'power2.out' }, 86.3);
+    tl.fromTo(lines[1], { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 1.6, ease: 'power2.out' }, 89.2);
+    tl.to(legacy, { autoAlpha: 0, y: -18, duration: 1.2, ease: 'power2.in' }, 93.6);
+
+    // Escena 9 — Cierre (95–100): el loto se simplifica en el yantra y aparece el logo.
+    tl.to(C, {
+      x: () => L.x + (wide() ? (view.w * 0.17) / S.logo() : 0),
+      y: () => L.y + (wide() ? 0 : (view.h * 0.08) / S.logo()),
+      s: S.logo,
+      duration: 3,
+      ease: 'power2.inOut',
+    }, 94.8);
+    const fadeOut = $$('[data-dust], [data-obstacles], [data-order], [data-arch], [data-light], [data-value], [data-thread], [data-thread-glow]');
+    tl.to(fadeOut, { autoAlpha: 0, duration: 1.8 }, 95);
+    tl.to($$('[data-petal], [data-petal-in]'), { scale: 0.35, autoAlpha: 0, duration: 2.2, ease: 'power2.in' }, 95.4);
+    draw($$('[data-logo-circles] .s-draw'), 95.2, 2.2, 0.25);
+    draw($$('[data-logo-petals] .s-draw'), 96.2, 2, 0.08);
+    draw($$('[data-logo-tris] .s-draw'), 97, 1.8, 0.1);
+    draw($$('[data-logo-frame] .s-draw'), 97.4, 2, 0.05);
+    const end = $<HTMLElement>('[data-story-end]');
+    tl.fromTo(end.children, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 1.6, stagger: 0.3, ease: 'power2.out' }, 97.8);
+    tl.set(end, { autoAlpha: 1 }, 97.8);
+
+    // Estado inicial de lo que aparece después.
+    gsap.set(['[data-arch]', '[data-light]'].map((s) => $(s)), { autoAlpha: 0 });
+    gsap.set($$('[data-logo] .s-draw, [data-arch] .s-draw'), { drawSVG: '0%' });
+
+    render();
+
+    return () => root.classList.remove('is-live');
+  });
+</script>
