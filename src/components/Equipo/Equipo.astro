@@ -1,0 +1,334 @@
+---
+import { Image, Picture } from 'astro:assets';
+import poster from '../../assets/brand/poster-socios-v4.jpg';
+import { equipo } from '../../data/equipo';
+import PerfilPanel from './PerfilPanel.astro';
+
+const conBio = equipo.filter((m) => m.bio.length > 0);
+---
+
+<section class="equipo" id="equipo" aria-labelledby="equipo-title" data-equipo>
+  <div class="equipo__hero">
+    <div class="equipo__poster" aria-hidden="true">
+      <Picture
+        src={poster}
+        formats={['avif', 'webp']}
+        widths={[640, 1280]}
+        sizes="100vw"
+        alt=""
+        loading="lazy"
+        class="equipo__poster-img"
+      />
+    </div>
+    <div class="equipo__shade" aria-hidden="true"></div>
+    <header class="equipo__head container">
+      <p class="eyebrow">Quiénes están de su lado</p>
+      <h2 class="display equipo__title" id="equipo-title">
+        <span class="mask"><span class="line">El</span></span>
+        <span class="mask"><span class="light">Equipo</span></span>
+      </h2>
+      <p class="equipo__sub">Socios y abogados</p>
+    </header>
+  </div>
+
+  <div class="container">
+    <ul class="equipo__grid" role="list">
+      {
+        equipo.map((m) => {
+          const Tag = m.bio.length ? 'button' : 'div';
+          return (
+            <li class="miembro" data-miembro>
+              <Tag
+                class="miembro__card"
+                {...(m.bio.length
+                  ? {
+                      type: 'button',
+                      'aria-expanded': 'false',
+                      'aria-controls': `perfil-${m.id}`,
+                      'data-perfil-open': m.id,
+                    }
+                  : {})}
+              >
+                <span class="miembro__photo">
+                  <Image
+                    src={m.foto}
+                    alt={`Retrato de ${m.nombre}`}
+                    widths={[360, 600]}
+                    sizes="(max-width: 767px) 50vw, 25vw"
+                    loading="lazy"
+                  />
+                </span>
+                <span class="miembro__name">{m.nombre}</span>
+                <span class="miembro__role">{m.cargo}</span>
+                {m.bio.length > 0 && (
+                  <span class="miembro__more">
+                    Ver perfil <span aria-hidden="true">+</span>
+                  </span>
+                )}
+              </Tag>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+
+  <div class="equipo__panels">
+    {conBio.map((m) => <PerfilPanel miembro={m} />)}
+  </div>
+</section>
+
+<style>
+  .equipo {
+    position: relative;
+    padding-bottom: clamp(4rem, 10vw, 8rem);
+  }
+  .equipo__hero {
+    position: relative;
+    height: min(90vh, 56.25vw + 10vh);
+    min-height: 460px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+  }
+  .equipo__poster {
+    position: absolute;
+    inset: -10% 0;
+  }
+  .equipo__poster :global(picture),
+  .equipo__poster :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .equipo__shade {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, var(--ink) 0%, rgba(10, 14, 21, 0.2) 30%, rgba(10, 14, 21, 0.3) 60%, var(--ink) 100%),
+      linear-gradient(90deg, rgba(10, 14, 21, 0.7) 0%, transparent 60%);
+  }
+  .equipo__head {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding-bottom: clamp(2rem, 6vw, 5rem);
+  }
+  .equipo__title {
+    font-size: clamp(3.5rem, 11vw, 11rem);
+  }
+  .equipo__sub {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-dim);
+  }
+
+  .equipo__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1rem, 2vw, 2rem);
+    margin: clamp(2rem, 5vw, 4rem) 0;
+    padding: 0;
+    list-style: none;
+  }
+  .miembro__card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: left;
+  }
+  button.miembro__card {
+    cursor: pointer;
+  }
+  .miembro__photo {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    background: var(--ink-3);
+  }
+  .miembro__photo::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--sand);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .miembro__photo :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1);
+    transition:
+      filter 0.6s var(--ease-out),
+      transform 0.8s var(--ease-out);
+  }
+  .miembro__card:hover .miembro__photo :global(img),
+  .miembro__card[aria-expanded='true'] .miembro__photo :global(img) {
+    filter: grayscale(0);
+    transform: scale(1.03);
+  }
+  .miembro__card:hover .miembro__photo::after,
+  .miembro__card[aria-expanded='true'] .miembro__photo::after {
+    transform: scaleX(1);
+  }
+  .miembro__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.1rem, 1.6vw, 1.375rem);
+    line-height: 1.15;
+  }
+  .miembro__role {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+  .miembro__more {
+    margin-top: 0.5rem;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dim);
+    transition: color 0.3s var(--ease-out);
+  }
+  .miembro__card:hover .miembro__more {
+    color: var(--sand);
+  }
+
+  @media (max-width: 767px) {
+    .equipo__hero {
+      height: 70svh;
+    }
+    .equipo__poster {
+      inset: 0;
+    }
+    .equipo__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: 2.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .miembro__photo :global(img) {
+      filter: none;
+    }
+  }
+</style>
+
+<script>
+  import { lockScroll, loadGsap, prefersReducedMotion, scene, scrollToY } from '../../animations/setup';
+  import { BP, DUR, EASE } from '../../animations/constants';
+  import { revealLines } from '../../animations/reveal';
+
+  const root = document.querySelector<HTMLElement>('[data-equipo]')!;
+  const openers = [...root.querySelectorAll<HTMLButtonElement>('[data-perfil-open]')];
+  let current: { btn: HTMLButtonElement; panel: HTMLElement } | null = null;
+
+  const isMobile = () => window.matchMedia(BP.mobile).matches;
+
+  async function animateHeight(panel: HTMLElement, open: boolean) {
+    if (prefersReducedMotion() || isMobile()) return;
+    const { gsap, ScrollTrigger } = await loadGsap();
+    await gsap
+      .fromTo(
+        panel,
+        { height: open ? 0 : panel.offsetHeight },
+        { height: open ? 'auto' : 0, duration: 0.6, ease: EASE.enter, clearProps: 'height' },
+      )
+      .then();
+    ScrollTrigger.refresh();
+  }
+
+  async function close(returnFocus = true) {
+    if (!current) return;
+    const { btn, panel } = current;
+    current = null;
+    btn.setAttribute('aria-expanded', 'false');
+    await animateHeight(panel, false);
+    panel.hidden = true;
+    if (isMobile()) lockScroll(false);
+    if (returnFocus) btn.focus();
+  }
+
+  async function open(btn: HTMLButtonElement) {
+    const panel = document.getElementById(btn.getAttribute('aria-controls')!)!;
+    if (current?.btn === btn) return close();
+    if (current) await close(false);
+    current = { btn, panel };
+    btn.setAttribute('aria-expanded', 'true');
+    panel.hidden = false;
+    if (isMobile()) lockScroll(true);
+    panel.querySelector<HTMLElement>('.perfil__name')?.focus({ preventScroll: true });
+    if (!isMobile()) {
+      scrollToY(panel.getBoundingClientRect().top + window.scrollY - 120);
+    }
+    await animateHeight(panel, true);
+  }
+
+  openers.forEach((btn) => btn.addEventListener('click', () => void open(btn)));
+  root.querySelectorAll('[data-perfil-close]').forEach((b) => b.addEventListener('click', () => void close()));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && current) void close();
+  });
+
+  scene(5, ({ gsap, c }) => {
+    if (c.reduce) return; // fotos a color, sin parallax ni clip-path
+
+    // La única parallax del sitio (solo desktop).
+    if (c.desktop) {
+      gsap.fromTo(
+        root.querySelector('.equipo__poster'),
+        { yPercent: -8 },
+        {
+          yPercent: 8,
+          ease: 'none',
+          scrollTrigger: { trigger: root.querySelector('.equipo__hero'), start: 'top bottom', end: 'bottom top', scrub: true },
+        },
+      );
+    }
+
+    revealLines(gsap, root.querySelector('.equipo__title')!, root.querySelector('.equipo__head')!, 'top 85%');
+    gsap.from(root.querySelectorAll('.equipo__head .eyebrow, .equipo__sub'), {
+      autoAlpha: 0,
+      y: 20,
+      duration: DUR.base,
+      ease: EASE.heavy,
+      scrollTrigger: { trigger: root.querySelector('.equipo__head'), start: 'top 85%', once: true },
+    });
+
+    const photos = root.querySelectorAll('.miembro__photo');
+    gsap.fromTo(
+      photos,
+      { clipPath: 'inset(100% 0% 0% 0%)' },
+      {
+        clipPath: 'inset(0% 0% 0% 0%)',
+        duration: DUR.slow,
+        ease: EASE.enter,
+        stagger: 0.12,
+        scrollTrigger: { trigger: root.querySelector('.equipo__grid'), start: 'top 80%', once: true },
+      },
+    );
+    gsap.from(root.querySelectorAll('.miembro__name, .miembro__role, .miembro__more'), {
+      autoAlpha: 0,
+      y: 16,
+      duration: DUR.base,
+      ease: EASE.heavy,
+      stagger: 0.04,
+      delay: 0.3,
+      scrollTrigger: { trigger: root.querySelector('.equipo__grid'), start: 'top 80%', once: true },
+    });
+  });
+</script>

@@ -1,0 +1,202 @@
+@import './tokens.css';
+@import './typography.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-padding-top: var(--nav-h);
+}
+
+/* Lenis controla el scroll suave; sin él, scroll nativo sin smooth para no pelear con los pins. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+body.is-locked {
+  overflow: hidden;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sand);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1000;
+  padding: 12px 20px;
+  background: var(--sand);
+  color: var(--ink);
+  border-radius: var(--pill);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  position: relative;
+  padding-block: clamp(5rem, 12vw, 10rem);
+}
+
+/* Grilla editorial de 12 columnas que "asoma" en algunas secciones. */
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+}
+.grid-lines span {
+  border-left: 1px solid var(--line);
+  opacity: 0.5;
+}
+.grid-lines span:last-child {
+  border-right: 1px solid var(--line);
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 48px;
+  padding: 0.85em 1.6em;
+  border-radius: var(--pill);
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.3s var(--ease-out),
+    color 0.3s var(--ease-out),
+    border-color 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out);
+}
+.btn--primary {
+  background: var(--brand-blue);
+  color: #fff;
+}
+.btn--primary:hover {
+  border-color: var(--sand);
+}
+.btn--outline {
+  border-color: var(--sand);
+  color: var(--sand);
+  background: transparent;
+}
+.btn--outline:hover {
+  background: var(--sand);
+  color: var(--ink);
+}
+.btn--ghost {
+  border-color: var(--line);
+  background: transparent;
+}
+.btn--ghost:hover {
+  border-color: var(--sand);
+  color: var(--sand);
+}
+.btn .arrow {
+  transition: transform 0.3s var(--ease-out);
+}
+.btn:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* Textura: grano + viñeta, fijos sobre todo. */
+.grain {
+  position: fixed;
+  inset: -50%;
+  z-index: 900;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 899;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+/* Sin JS de animación, todo visible. Los estados iniciales ocultos solo se aplican con .js-anim. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

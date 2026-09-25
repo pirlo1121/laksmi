@@ -1,0 +1,149 @@
+---
+import type { Miembro } from '../../data/equipo';
+
+interface Props {
+  miembro: Miembro;
+}
+
+const { miembro } = Astro.props;
+---
+
+<div
+  class="perfil"
+  id={`perfil-${miembro.id}`}
+  role="region"
+  aria-labelledby={`perfil-${miembro.id}-title`}
+  data-perfil={miembro.id}
+  hidden
+>
+  <div class="perfil__inner container">
+    <header class="perfil__head">
+      <div>
+        <p class="eyebrow">{miembro.cargo}</p>
+        <h3 class="perfil__name" id={`perfil-${miembro.id}-title`} tabindex="-1">{miembro.nombre}</h3>
+        {
+          miembro.etiquetas.length > 0 && (
+            <ul class="perfil__chips" role="list">
+              {miembro.etiquetas.map((t) => (
+                <li>{t}</li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+      <button class="perfil__close" type="button" data-perfil-close>
+        Cerrar <span aria-hidden="true">✕</span>
+      </button>
+    </header>
+    <div class="perfil__bio">
+      {miembro.bio.map((p) => <p>{p}</p>)}
+    </div>
+  </div>
+</div>
+
+<style>
+  .perfil {
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+    background: var(--ink-2);
+  }
+  .perfil[hidden] {
+    display: none;
+  }
+  .perfil__inner {
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+  }
+  .perfil__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .perfil__name {
+    margin: 0.75rem 0 1rem;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(2rem, 4vw, 3.75rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .perfil__name:focus {
+    outline: none;
+  }
+  .perfil__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .perfil__chips li {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--pill);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .perfil__close {
+    flex: none;
+    min-height: 44px;
+    padding: 0 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--pill);
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color 0.3s var(--ease-out);
+  }
+  .perfil__close:hover {
+    border-color: var(--sand);
+  }
+  .perfil__bio {
+    columns: 2;
+    column-gap: clamp(2rem, 5vw, 5rem);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .perfil__bio p {
+    margin: 0 0 1.25em;
+    break-inside: avoid;
+  }
+
+  /* Móvil: hoja (bottom sheet) a pantalla completa con scroll interno. */
+  @media (max-width: 767px) {
+    .perfil {
+      position: fixed;
+      inset: 0;
+      z-index: 850;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border: 0;
+      background: var(--ink-2);
+    }
+    .perfil__head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      flex-direction: column-reverse;
+      gap: 1rem;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 1rem var(--gutter) 1.5rem;
+      background: var(--ink-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .perfil__close {
+      align-self: flex-end;
+    }
+    .perfil__inner {
+      padding-top: 0;
+    }
+    .perfil__bio {
+      columns: 1;
+      padding-top: 1.5rem;
+    }
+  }
+</style>

@@ -1,0 +1,113 @@
+---
+/**
+ * Yantra de la marca, redibujado en SVG a partir de yantra.png (vector original [PENDIENTE]).
+ * Solo trazos, color currentColor. Capas (clases, no ids, porque el componente se repite):
+ *   .y-frame > .y-gate--{n|e|s|w}   las 4 puertas (cada lado del marco doble)
+ *   .y-core  > .y-circles · .y-petals · .y-triangles · .y-bindu
+ * El trazo no escala (vector-effect) para que se vea fino a 44px y a 60vh.
+ */
+interface Props {
+  class?: string;
+  /** Texto accesible; si falta, el SVG es decorativo. */
+  title?: string;
+  /** Rotación estática en grados (p. ej. para la versión sin animación de las áreas). */
+  rotate?: number;
+  /** Puerta encendida de entrada (n|e|s|w). */
+  lit?: string;
+  [key: `data-${string}`]: string | undefined;
+}
+
+const { class: className, title, rotate = 0, lit, ...rest } = Astro.props;
+
+// Un lado del marco (norte), de diagonal a diagonal. Los otros tres son rotaciones de 90°.
+const OUTER = 'M -480 -480 H -326 V -562 H 326 V -480 H 480';
+const INNER = 'M -430 -430 H -143 V -466 H -275 V -514 H 275 V -466 H 143 V -430 H 430';
+const gates = [
+  { id: 'n', rot: 0 },
+  { id: 'e', rot: 90 },
+  { id: 's', rot: 180 },
+  { id: 'w', rot: 270 },
+] as const;
+
+const PETAL =
+  'M -98.7 -238.4 C -96 -268 -86 -284 -66 -298 L 0 -338 L 66 -298 C 86 -284 96 -268 98.7 -238.4';
+const petals = Array.from({ length: 8 }, (_, i) => i * 45);
+
+const triangles = [
+  '0,-255 242,73 -242,73',
+  '0,255 242,-73 -242,-73',
+  '0,-185 177,121 -177,121',
+  '0,185 177,-121 -177,-121',
+];
+---
+
+<svg
+  class:list={['yantra', className]}
+  viewBox="-575 -575 1150 1150"
+  fill="none"
+  stroke="currentColor"
+  stroke-linejoin="miter"
+  role={title ? 'img' : undefined}
+  aria-hidden={title ? undefined : 'true'}
+  focusable="false"
+  {...rest}
+>
+  {title && <title>{title}</title>}
+  <g class="y-rot" transform={rotate ? `rotate(${rotate})` : undefined}>
+    <g class="y-frame">
+      {
+        gates.map((g) => (
+          <g class:list={['y-gate', `y-gate--${g.id}`, { 'is-lit': lit === g.id }]} data-gate={g.id}>
+            <g transform={g.rot ? `rotate(${g.rot})` : undefined}>
+              <path class="y-draw" d={OUTER} />
+              <path class="y-draw" d={INNER} />
+            </g>
+          </g>
+        ))
+      }
+    </g>
+    <g class="y-core">
+      <g class="y-circles">
+        <circle class="y-draw" r="405" />
+        <circle class="y-draw" r="361" />
+        <circle class="y-draw" r="258" />
+      </g>
+      <g class="y-petals">
+        {petals.map((deg) => <path class="y-draw" d={PETAL} transform={`rotate(${deg})`} />)}
+      </g>
+      <g class="y-triangles">
+        {triangles.map((pts) => <polygon class="y-draw" points={pts} />)}
+      </g>
+      <g class="y-bindu">
+        <circle class="y-draw" r="14" />
+      </g>
+    </g>
+  </g>
+</svg>
+
+<style>
+  .yantra {
+    overflow: visible;
+  }
+  .yantra :global(.y-draw) {
+    vector-effect: non-scaling-stroke;
+    stroke-width: var(--yantra-stroke, 1.25px);
+  }
+  .yantra :global(.y-gate) {
+    color: var(--gate-color, currentColor);
+    transition:
+      color 0.5s var(--ease-out),
+      filter 0.5s var(--ease-out);
+  }
+  .yantra :global(.y-gate .y-draw) {
+    transition: stroke-width 0.5s var(--ease-out);
+  }
+  /* Puerta encendida: trazo más grueso y brillo Sand suave. */
+  .yantra :global(.y-gate.is-lit) {
+    color: var(--sand);
+    filter: drop-shadow(0 0 6px rgba(241, 209, 152, 0.3));
+  }
+  .yantra :global(.y-gate.is-lit .y-draw) {
+    stroke-width: var(--yantra-stroke-lit, 2.5px);
+  }
+</style>

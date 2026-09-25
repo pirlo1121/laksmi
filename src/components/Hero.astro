@@ -1,0 +1,431 @@
+---
+import { Picture } from 'astro:assets';
+import bogota from '../assets/brand/bogota.jpg';
+import { site } from '../data/site';
+import Yantra from './Yantra.astro';
+
+// [PENDIENTE] imagen/video del hero en alta resolución (hoy 1280×720).
+const title = 'LAKSMI';
+---
+
+<section class="hero" id="top" data-hero aria-labelledby="hero-title">
+  <div class="hero__stage">
+    <div class="hero__media" aria-hidden="true">
+      <Picture
+        src={bogota}
+        formats={['avif', 'webp']}
+        widths={[640, 960, 1280]}
+        sizes="100vw"
+        alt=""
+        loading="eager"
+        fetchpriority="high"
+        class="hero__img"
+        data-hero-img
+      />
+      <div class="hero__overlay"></div>
+      <div class="hero__shade"></div>
+    </div>
+
+    <div class="hero__yantra-wrap" aria-hidden="true">
+      <Yantra class="hero__yantra" data-hero-yantra="" />
+    </div>
+
+    <div class="hero__content container">
+      <p class="eyebrow hero__eyebrow" data-hero-fade>{site.ciudad}</p>
+      <h1 class="display hero__title" id="hero-title" aria-label="LAKSMI Abogados — Abogados en Bogotá">
+        <span class="hero__line1 mask" aria-hidden="true">
+          {[...title].map((ch) => <span class="hero__char">{ch}</span>)}
+        </span>
+        <span class="hero__line2" aria-hidden="true">
+          <span class="light hero__light">Abogados</span>
+        </span>
+      </h1>
+    </div>
+
+    <p class="hero__phrase" data-hero-phrase>{site.fraseHero}</p>
+
+    <div class="hero__bottom container">
+      <p class="hero__lema" data-hero-fade>{site.lema}.</p>
+      <a class="hero__chip" href="#contacto" data-hero-fade>
+        <span class="hero__dot" aria-hidden="true"></span>
+        Primera consulta gratis
+      </a>
+      <div class="hero__cue" aria-hidden="true" data-hero-fade>
+        <span>Desplázate</span>
+        <span class="hero__cue-line"><span data-hero-cue></span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    height: 100vh;
+    height: 100svh;
+    min-height: 560px;
+  }
+  .hero__stage {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .hero__media,
+  .hero__media :global(picture) {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+  .hero__media :global(.hero__img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform-origin: 50% 60%;
+  }
+  .hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(10, 14, 21, 0.4) 0%, rgba(10, 14, 21, 0.95) 100%);
+  }
+  .hero__shade {
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    opacity: 0;
+  }
+
+  .hero__yantra-wrap {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+  .hero__yantra-wrap :global(.hero__yantra) {
+    width: 38vh;
+    height: 38vh;
+    color: var(--sand);
+    opacity: 0.9;
+    --yantra-stroke: 1.25px;
+  }
+  /* Con preloader, el yantra del hero espera a que el del preloader llegue (FLIP). */
+  :global(html.js:not(.no-preloader)) .hero__yantra-wrap :global(.hero__yantra) {
+    visibility: hidden;
+    animation: hero-yantra-failsafe 0s 5.5s forwards;
+  }
+  @keyframes hero-yantra-failsafe {
+    to {
+      visibility: visible;
+    }
+  }
+
+  .hero__content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: var(--nav-h);
+    pointer-events: none;
+  }
+  .hero__eyebrow {
+    margin-bottom: 1.5rem;
+  }
+  .hero__title {
+    font-size: 18vw;
+  }
+  .hero__line1 {
+    display: block;
+    white-space: nowrap;
+  }
+  .hero__char {
+    display: inline-block;
+  }
+  .hero__line2 {
+    display: block;
+    overflow: hidden;
+    padding: 0.04em 0.1em 0.12em 0;
+  }
+  .hero__light {
+    font-size: 0.5em; /* 9vw */
+    line-height: 1;
+    padding-left: 0.08em;
+  }
+
+  .hero__phrase {
+    position: absolute;
+    left: var(--gutter);
+    right: var(--gutter);
+    top: 50%;
+    translate: 0 -50%;
+    margin: 0 auto;
+    max-width: 16ch;
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 5vw;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    visibility: hidden; /* aparece con el scroll; visible en reduced-motion */
+  }
+
+  .hero__bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: clamp(1.5rem, 4vh, 3rem);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+  .hero__lema {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text);
+  }
+  .hero__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--pill);
+    background: rgba(10, 14, 21, 0.5);
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    margin-inline: auto 0;
+    transition: border-color 0.3s var(--ease-out);
+  }
+  .hero__chip:hover {
+    border-color: var(--sand);
+  }
+  .hero__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sand);
+    box-shadow: 0 0 0 0 rgba(241, 209, 152, 0.6);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    70% {
+      box-shadow: 0 0 0 10px rgba(241, 209, 152, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(241, 209, 152, 0);
+    }
+  }
+  .hero__cue {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .hero__cue-line {
+    position: relative;
+    width: 1px;
+    height: 56px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .hero__cue-line span {
+    position: absolute;
+    inset: 0;
+    background: var(--sand);
+    transform-origin: top;
+    animation: cue 2.2s var(--ease-out) infinite;
+  }
+  @keyframes cue {
+    0% {
+      transform: scaleY(0);
+      transform-origin: top;
+    }
+    50% {
+      transform: scaleY(1);
+      transform-origin: top;
+    }
+    51% {
+      transform-origin: bottom;
+    }
+    100% {
+      transform: scaleY(0);
+      transform-origin: bottom;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero__title {
+      font-size: 22vw;
+    }
+    .hero__yantra-wrap :global(.hero__yantra) {
+      width: 28vh;
+      height: 28vh;
+    }
+    .hero__phrase {
+      font-size: 9vw;
+    }
+    .hero__lema {
+      font-size: 17px;
+    }
+    .hero__bottom {
+      flex-wrap: wrap;
+    }
+    .hero__chip {
+      order: -1;
+      margin: 0;
+    }
+    .hero__cue {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero {
+      height: auto;
+      min-height: 100svh;
+    }
+    .hero__stage {
+      min-height: 100svh;
+    }
+    /* Sin scroll animado, la frase queda a la derecha, lejos del título. */
+    .hero__phrase {
+      visibility: visible;
+      top: auto;
+      bottom: calc(clamp(1.5rem, 4vh, 3rem) + 5rem);
+      left: auto;
+      translate: none;
+      max-width: 14ch;
+      margin: 0;
+      text-align: right;
+      font-size: clamp(1.25rem, 2.4vw, 2.25rem);
+    }
+    .hero__cue {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { introDone, scene } from '../animations/setup';
+  import { EASE, SCROLL } from '../animations/constants';
+  import { split } from '../animations/reveal';
+
+  const hero = document.querySelector<HTMLElement>('[data-hero]')!;
+  const q = <T extends Element = HTMLElement>(s: string) => hero.querySelector<T>(s)!;
+  const qa = (s: string) => hero.querySelectorAll<HTMLElement>(s);
+
+  let entrancePlayed = false;
+
+  scene(1, ({ gsap, c }) => {
+    const img = q('.hero__img');
+    const shade = q('.hero__shade');
+    const yantra = q<SVGSVGElement>('[data-hero-yantra]');
+    const gates = yantra.querySelectorAll<SVGGElement>('.y-gate');
+    const line1 = q('.hero__line1');
+    const line2 = q('.hero__line2');
+    const phrase = q('[data-hero-phrase]');
+    const fades = qa('[data-hero-fade]');
+
+    /* ---- Reduced motion: todo visible, solo un fade inicial ---- */
+    if (c.reduce) {
+      introDone.then(() => gsap.from(hero, { autoAlpha: 0, duration: 0.3 }));
+      return;
+    }
+
+    /* ---- Entrada (timed), una sola vez ---- */
+    if (!entrancePlayed) {
+      entrancePlayed = true;
+      const chars = qa('.hero__char');
+      const light = q('.hero__light');
+      const hadPreloader = !document.documentElement.classList.contains('no-preloader');
+      gsap.set(chars, { yPercent: 110 });
+      gsap.set(light, { clipPath: 'inset(0 100% 0 0)' });
+      gsap.set(fades, { autoAlpha: 0, y: 20 });
+      if (!hadPreloader) gsap.set(yantra, { autoAlpha: 0 });
+
+      introDone.then(() => {
+        const tl = gsap.timeline({ defaults: { ease: EASE.enter } });
+        tl.to(chars, { yPercent: 0, duration: 1.2, stagger: 0.04 }, 0.15)
+          .to(light, { clipPath: 'inset(0 0% 0 0)', duration: 1.2 }, 0.45)
+          .to(fades, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.08 }, 0.6);
+        if (!hadPreloader) {
+          const paths = yantra.querySelectorAll('.y-draw');
+          tl.set(yantra, { autoAlpha: 0.9 }, 0).fromTo(
+            paths,
+            { drawSVG: '0%' },
+            { drawSVG: '100%', duration: 1.2, ease: 'power2.inOut', stagger: 0.01 },
+            0,
+          );
+        }
+      });
+    }
+
+    /* ---- Principal (scrub sobre el pin) ---- */
+    const words = split(phrase, 'words', 'hero__word');
+    gsap.set(phrase, { visibility: 'visible' });
+    gsap.set(words, { yPercent: 110, autoAlpha: 0 });
+
+    const tl = gsap.timeline({
+      defaults: { ease: EASE.scrub },
+      scrollTrigger: {
+        trigger: hero,
+        start: 'top top',
+        end: c.desktop ? SCROLL.heroDesktop : SCROLL.heroMobile,
+        pin: true,
+        scrub: true,
+        anticipatePin: 1,
+        onLeave: () => window.dispatchEvent(new CustomEvent('laksmi:hero-leave')),
+        onEnterBack: () => window.dispatchEvent(new CustomEvent('laksmi:hero-enter')),
+      },
+    });
+
+    // 0–60%: descenso sobre Bogotá; el overlay se oscurece.
+    tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.25 : 1.12, duration: 60 }, 0);
+    tl.fromTo(shade, { opacity: 0 }, { opacity: 0.6, duration: 60 }, 0);
+
+    // 20–70%: el yantra rota 45° y crece; las puertas se separan del centro.
+    tl.fromTo(yantra, { rotation: 0, scale: 1 }, { rotation: 45, scale: 1.6, duration: 50 }, 20);
+    if (c.desktop) {
+      const push = 22; // unidades del viewBox ≈ 8px a este tamaño
+      const dir: Record<string, [number, number]> = { n: [0, -1], e: [1, 0], s: [0, 1], w: [-1, 0] };
+      gates.forEach((g) => {
+        const [x, y] = dir[g.dataset.gate!];
+        tl.to(g, { x: x * push, y: y * push, duration: 50 }, 20);
+      });
+    }
+
+    // 40–80%: el título se separa y se desvanece.
+    tl.to(line1, { yPercent: -40, autoAlpha: 0, duration: 40 }, 40);
+    tl.to(line2, { yPercent: 40, autoAlpha: 0, duration: 40 }, 40);
+    tl.to(fades, { autoAlpha: 0, duration: 15 }, 40);
+
+    // 60–100%: la frase aparece palabra por palabra.
+    tl.to(words, { yPercent: 0, autoAlpha: 1, duration: 8, stagger: 4 }, 60);
+
+    // 88–100%: el yantra se reduce y viaja hacia la esquina donde queda el yantra de progreso.
+    tl.to(
+      yantra,
+      {
+        scale: 0.15,
+        x: () => window.innerWidth / 2 - 46,
+        y: () => window.innerHeight / 2 - 46,
+        autoAlpha: 0,
+        duration: 12,
+        ease: 'power2.in',
+      },
+      88,
+    );
+
+    return () => {
+      gsap.set(phrase, { clearProps: 'visibility' });
+    };
+  });
+</script>

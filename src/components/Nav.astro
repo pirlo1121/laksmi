@@ -1,0 +1,275 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/brand/logo-claro.png';
+import { contacto, nav } from '../data/site';
+---
+
+<header class="nav" data-nav>
+  <nav class="nav__bar container" aria-label="Principal">
+    <a class="nav__logo" href="#top" aria-label="LAKSMI Abogados — inicio">
+      <Image src={logo} alt="" height={28} width={104} loading="eager" />
+    </a>
+    <ul class="nav__links" role="list">
+      {
+        nav.map((l) => (
+          <li>
+            <a href={l.href} data-nav-link={l.href.slice(1)}>
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <a class="btn btn--primary nav__cta" href="#contacto">Consulta gratis</a>
+    <button
+      class="nav__burger"
+      type="button"
+      aria-expanded="false"
+      aria-controls="menu-movil"
+      aria-label="Abrir menú"
+      data-burger
+    >
+      <span></span><span></span>
+    </button>
+  </nav>
+
+  <div class="menu" id="menu-movil" data-menu hidden>
+    <ul class="menu__links" role="list">
+      {
+        nav.map((l) => (
+          <li class="mask">
+            <a href={l.href} data-menu-link>
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <a class="btn btn--outline menu__wa" href={contacto.whatsappLink} target="_blank" rel="noopener">
+      WhatsApp · {contacto.whatsapp}
+    </a>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 800;
+    height: var(--nav-h);
+    transition:
+      background-color 0.4s var(--ease-out),
+      border-color 0.4s var(--ease-out),
+      backdrop-filter 0.4s var(--ease-out);
+    border-bottom: 1px solid transparent;
+  }
+  .nav.is-scrolled {
+    background: rgba(10, 14, 21, 0.8);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom-color: var(--line);
+  }
+  .nav__bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  .nav__logo {
+    flex: none;
+    display: block;
+  }
+  .nav__logo img {
+    height: 28px;
+    width: auto;
+  }
+  .nav__links {
+    display: flex;
+    gap: clamp(1rem, 2.4vw, 2.5rem);
+    margin: 0 auto;
+    padding: 0;
+    list-style: none;
+  }
+  .nav__links a {
+    position: relative;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--text);
+    padding-block: 6px;
+  }
+  .nav__links a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: var(--sand);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.5s var(--ease-out);
+  }
+  .nav__links a:hover::after,
+  .nav__links a.is-active::after {
+    transform: scaleX(1);
+  }
+  .nav__links a.is-active {
+    color: var(--sand);
+  }
+  .nav__cta {
+    min-height: 40px;
+    padding: 0.6em 1.3em;
+    font-size: 14px;
+  }
+  .nav__burger {
+    display: none;
+  }
+
+  /* Menú móvil */
+  .menu {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--ink);
+    padding: calc(var(--nav-h) + 2rem) var(--gutter) 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .menu[hidden] {
+    display: none;
+  }
+  .menu__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .menu__links a {
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 12vw;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding-block: 0.08em;
+  }
+  .menu__links a:active {
+    color: var(--sand);
+  }
+
+  @media (max-width: 767px) {
+    .nav__links,
+    .nav__cta {
+      display: none;
+    }
+    .nav__bar {
+      justify-content: space-between;
+    }
+    .nav__burger {
+      display: grid;
+      place-content: center;
+      gap: 7px;
+      width: 48px;
+      height: 48px;
+      margin-right: -12px;
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+    .nav__burger span {
+      display: block;
+      width: 26px;
+      height: 1.5px;
+      background: var(--text);
+      transition: transform 0.4s var(--ease-out);
+    }
+    .nav__burger[aria-expanded='true'] span:first-child {
+      transform: translateY(4.25px) rotate(45deg);
+    }
+    .nav__burger[aria-expanded='true'] span:last-child {
+      transform: translateY(-4.25px) rotate(-45deg);
+    }
+  }
+</style>
+
+<script>
+  import { lockScroll, scene } from '../animations/setup';
+
+  const header = document.querySelector<HTMLElement>('[data-nav]')!;
+  const burger = header.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const menu = header.querySelector<HTMLElement>('[data-menu]')!;
+
+  /* ---- Menú móvil (funciona sin GSAP) ---- */
+  function setMenu(open: boolean) {
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    menu.hidden = !open;
+    lockScroll(open);
+    if (open) {
+      header.classList.add('is-scrolled');
+      menu.querySelector('a')?.focus();
+      window.dispatchEvent(new CustomEvent('laksmi:menu-open'));
+    } else {
+      header.classList.toggle('is-scrolled', window.scrollY > 80);
+    }
+  }
+  burger.addEventListener('click', () => setMenu(burger.getAttribute('aria-expanded') !== 'true'));
+  menu.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('a')) setMenu(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.hidden) {
+      setMenu(false);
+      burger.focus();
+    }
+  });
+
+  /* ---- Estado con el scroll ---- */
+  scene(0, ({ gsap, ScrollTrigger, c }) => {
+    const show = gsap.quickTo(header, 'yPercent', { duration: 0.5, ease: 'power3.out' });
+
+    ScrollTrigger.create({
+      start: 80,
+      end: 'max',
+      onUpdate: (self) => {
+        if (!menu.hidden) return;
+        // Se oculta al bajar y reaparece al subir.
+        show(self.direction === 1 && self.scroll() > 240 ? -100 : 0);
+      },
+      onToggle: (self) => header.classList.toggle('is-scrolled', self.isActive),
+    });
+    header.classList.toggle('is-scrolled', window.scrollY > 80);
+
+    // Enlace de la sección activa.
+    const links = header.querySelectorAll<HTMLAnchorElement>('[data-nav-link]');
+    links.forEach((link) => {
+      const section = document.getElementById(link.dataset.navLink!);
+      if (!section) return;
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top 50%',
+        end: 'bottom 50%',
+        onToggle: (self) => link.classList.toggle('is-active', self.isActive),
+      });
+    });
+
+    // Reveal escalonado del menú móvil.
+    const onMenu = () => {
+      if (c.reduce) return;
+      gsap.from(menu.querySelectorAll('[data-menu-link]'), {
+        yPercent: 110,
+        duration: 0.9,
+        ease: 'expo.out',
+        stagger: 0.06,
+      });
+    };
+    window.addEventListener('laksmi:menu-open', onMenu);
+    return () => {
+      window.removeEventListener('laksmi:menu-open', onMenu);
+      gsap.set(header, { yPercent: 0 });
+    };
+  });
+</script>

@@ -1,0 +1,198 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/brand/logo-claro.png';
+import { contacto, redes, site } from '../data/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer" data-footer>
+  <p class="footer__band" aria-hidden="true"><span data-footer-band>Estamos de su lado</span></p>
+
+  <div class="container">
+    <div class="footer__cols">
+      <div class="footer__brand">
+        <Image src={logo} alt="LAKSMI Abogados" height={40} width={149} loading="lazy" />
+        <p>{site.marca}</p>
+      </div>
+      <div>
+        <h2 class="footer__h">Ubicación</h2>
+        <p>{contacto.direccion}<br />{contacto.referencia}<br />{contacto.ciudad}</p>
+      </div>
+      <div>
+        <h2 class="footer__h">Horarios</h2>
+        <p>
+          {
+            contacto.horarios.map((h) => (
+              <>
+                {h.dias} · {h.horas}
+                <br />
+              </>
+            ))
+          }
+          {contacto.horarioNota}
+        </p>
+      </div>
+      <div>
+        <h2 class="footer__h">Contacto</h2>
+        <p>
+          <a href={contacto.whatsappLink} target="_blank" rel="noopener">{contacto.whatsapp}</a><br />
+          <a href={`mailto:${contacto.email}`}>{contacto.email}</a>
+        </p>
+        <ul class="footer__social" role="list">
+          {
+            redes.map((r) => (
+              <li>
+                <a href={r.url} target="_blank" rel="noopener">
+                  {r.nombre}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__base">
+      <span>© {year} LAKSMI ABOGADOS. Todos los derechos reservados.</span>
+      <nav aria-label="Legal">
+        <a href="/politica-de-datos">Política de tratamiento de datos</a>
+        <span aria-hidden="true">·</span>
+        <!-- [PENDIENTE] página de términos -->
+        <span class="dim">Términos (próximamente)</span>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    border-top: 1px solid var(--line);
+    padding-bottom: 2rem;
+    overflow: hidden;
+  }
+  .footer__band {
+    margin: 0;
+    padding: clamp(2rem, 5vw, 4rem) 0 clamp(2rem, 4vw, 3rem);
+    text-align: center;
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 7.4vw;
+    line-height: 0.9;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+  }
+  .footer__band span {
+    /* Contorno sin relleno; el relleno llega de izquierda a derecha con el scroll. */
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(217, 217, 217, 0.28);
+    background: linear-gradient(var(--brand-white-grey), var(--brand-white-grey)) no-repeat;
+    background-size: var(--fill, 0%) 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  :global(html:not(.js)) .footer__band span {
+    --fill: 100%;
+  }
+  .footer__cols {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 2rem;
+    padding-block: clamp(2.5rem, 5vw, 4rem);
+    border-top: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .footer__cols p {
+    margin: 0;
+    color: var(--text-dim);
+  }
+  .footer__brand img {
+    height: 40px;
+    width: auto;
+    margin-bottom: 1rem;
+  }
+  .footer__brand p {
+    max-width: 28ch;
+  }
+  .footer__h {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+  .footer a {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .footer a:hover {
+    color: var(--sand);
+  }
+  .footer__social {
+    display: flex;
+    gap: 1.25rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+  }
+  .footer__base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .footer__base nav {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .footer__base .dim {
+    opacity: 0.6;
+  }
+
+  @media (max-width: 767px) {
+    .footer__band {
+      font-size: 14vw;
+      white-space: normal;
+    }
+    .footer__cols {
+      grid-template-columns: 1fr;
+    }
+    .footer {
+      padding-bottom: 6rem; /* espacio para el botón flotante */
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .footer__band span {
+      --fill: 100%;
+    }
+  }
+</style>
+
+<script>
+  import { scene } from '../animations/setup';
+
+  const band = document.querySelector<HTMLElement>('[data-footer-band]')!;
+
+  scene(8, ({ gsap, c }) => {
+    if (c.reduce) return;
+    gsap.fromTo(
+      band,
+      { '--fill': '0%' },
+      {
+        '--fill': '100%',
+        ease: 'none',
+        scrollTrigger: { trigger: band, start: 'top 90%', end: 'top 45%', scrub: 0.5 },
+      },
+    );
+  });
+</script>

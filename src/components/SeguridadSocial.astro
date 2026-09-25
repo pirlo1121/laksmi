@@ -1,0 +1,313 @@
+---
+import { glosario, paquetes } from '../data/paquetes';
+import Yantra from './Yantra.astro';
+---
+
+<section class="ss" id="paquetes" aria-labelledby="ss-title" data-ss>
+  <div class="ss__bg" aria-hidden="true">
+    <Yantra class="ss__watermark" />
+  </div>
+
+  <div class="container ss__inner">
+    <header class="ss__head">
+      <p class="eyebrow">Área 03 · Servicio insignia</p>
+      <h2 class="display display--section" id="ss-title">
+        <span class="mask"><span class="line">Seguridad</span></span>
+        <span class="mask"><span class="light">Social</span></span>
+      </h2>
+      <p class="lead ss__lead">
+        Afiliaciones y aportes a seguridad social para independientes y empresas. Elija su paquete y le
+        cotizamos hoy mismo.
+      </p>
+    </header>
+
+    <fieldset class="ss__cards" data-ss-cards>
+      <legend class="sr-only">Elija su paquete</legend>
+      {
+        paquetes.map((p, i) => (
+          <label class:list={['card', { 'card--featured': p.destacado }]} data-ss-card>
+            <input
+              class="sr-only"
+              type="radio"
+              name="paquete-card"
+              value={p.id}
+              checked={p.destacado}
+            />
+            <span class="card__rule" aria-hidden="true" />
+            <span class="card__top">
+              <span class="card__num">{String(i + 1).padStart(2, '0')}</span>
+              {p.destacado && <span class="card__badge">Más completo</span>}
+            </span>
+            <span class="card__name">
+              {p.siglas.map((s, j) => (
+                <>
+                  {j > 0 && <span class="card__plus"> + </span>}
+                  {s}
+                </>
+              ))}
+            </span>
+            <span class="card__desc">{p.descripcion}</span>
+            {p.precio && <span class="card__price">{p.precio}</span>}
+            <span class="card__choose">
+              <span class="card__radio" aria-hidden="true" />
+              <span class="card__choose-text"><span class="off">Elegir</span><span class="on">Elegido</span></span>
+            </span>
+          </label>
+        ))
+      }
+    </fieldset>
+
+    <div class="ss__foot">
+      <ul class="ss__glossary" role="list" aria-label="Glosario">
+        {
+          glosario.map((g) => (
+            <li>
+              <strong>{g.sigla}</strong> {g.significado.toLowerCase()}
+            </li>
+          ))
+        }
+      </ul>
+      <a class="btn btn--primary ss__cta" href="#contacto" data-area="seguridad-social" data-paquete="selected">
+        Cotizar mi paquete <span class="arrow">→</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ss {
+    position: relative;
+    padding-block: clamp(5rem, 12vw, 10rem);
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .ss__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--brand-dark-blue);
+  }
+  .ss__bg :global(.ss__watermark) {
+    position: absolute;
+    right: -18vw;
+    top: -10vw;
+    width: 70vw;
+    height: 70vw;
+    color: var(--text);
+    opacity: 0.05;
+    --yantra-stroke: 2px;
+  }
+  .ss__inner {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3rem, 6vw, 5rem);
+  }
+  .ss__head {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* Tarjetas-radio */
+  .ss__cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.75rem 1.5rem 1.5rem;
+    min-height: 280px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(10, 14, 21, 0.25);
+    cursor: pointer;
+    overflow: hidden;
+    transition:
+      transform 0.5s var(--ease-out),
+      border-color 0.4s var(--ease-out),
+      background-color 0.4s var(--ease-out);
+  }
+  .card:hover {
+    transform: translateY(-4px);
+  }
+  .card:has(input:checked) {
+    transform: translateY(-6px);
+    border-color: var(--sand);
+    background: var(--ink-3);
+  }
+  .card:has(input:focus-visible) {
+    outline: 2px solid var(--sand);
+    outline-offset: 3px;
+  }
+  .card__rule {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--sand);
+    transform-origin: left;
+  }
+  .card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card__num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 1.25rem;
+    color: var(--sand);
+  }
+  .card__badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--sand);
+    border: 1px solid rgba(241, 209, 152, 0.5);
+    border-radius: var(--pill);
+    padding: 4px 10px;
+  }
+  .card__name {
+    margin-top: 1rem;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.4rem, 1.9vw, 1.9rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+  }
+  .card__plus {
+    color: var(--sand);
+  }
+  .card__desc {
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+  .card__price {
+    font-weight: 600;
+    color: var(--sand);
+  }
+  .card__choose {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .card__radio {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid var(--sand);
+    box-shadow: inset 0 0 0 8px transparent;
+    transition: box-shadow 0.3s var(--ease-out);
+  }
+  .card:has(input:checked) .card__radio {
+    box-shadow: inset 0 0 0 3px var(--ink-3), inset 0 0 0 8px var(--sand);
+  }
+  .card__choose-text .on,
+  .card:has(input:checked) .card__choose-text .off {
+    display: none;
+  }
+  .card:has(input:checked) .card__choose-text .on {
+    display: inline;
+    color: var(--sand);
+  }
+
+  .ss__foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem 3rem;
+  }
+  .ss__glossary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .ss__glossary strong {
+    color: var(--sand);
+    font-weight: 600;
+    margin-right: 0.3em;
+  }
+
+  /* Móvil: carrusel con scroll-snap (CSS nativo). */
+  @media (max-width: 767px) {
+    .ss__cards {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 0.75rem;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 10px var(--gutter) 16px;
+      scroll-padding-inline: var(--gutter);
+      scrollbar-width: none;
+    }
+    .ss__cards::-webkit-scrollbar {
+      display: none;
+    }
+    .card {
+      flex: 0 0 85%;
+      scroll-snap-align: start;
+      min-height: 240px;
+    }
+    .ss__cta {
+      width: 100%;
+    }
+  }
+</style>
+
+<script>
+  import { scene } from '../animations/setup';
+  import { DUR, EASE } from '../animations/constants';
+  import { revealLines } from '../animations/reveal';
+
+  const root = document.querySelector<HTMLElement>('[data-ss]')!;
+
+  scene(4, ({ gsap, c }) => {
+    if (c.reduce) return; // aparición directa
+
+    // Cortina: el fondo azul oscuro sube.
+    gsap.fromTo(
+      root.querySelector('.ss__bg'),
+      { clipPath: 'inset(100% 0% 0% 0%)' },
+      {
+        clipPath: 'inset(0% 0% 0% 0%)',
+        ease: 'none',
+        scrollTrigger: { trigger: root, start: 'top bottom', end: 'top 35%', scrub: true },
+      },
+    );
+
+    revealLines(gsap, root.querySelector('.display')!, root, 'top 60%');
+    gsap.from(root.querySelectorAll('.ss__lead, .ss__foot'), {
+      y: 30,
+      autoAlpha: 0,
+      duration: DUR.base,
+      ease: EASE.heavy,
+      stagger: 0.1,
+      scrollTrigger: { trigger: root, start: 'top 55%', once: true },
+    });
+
+    const cards = root.querySelectorAll('[data-ss-card]');
+    const tl = gsap.timeline({ scrollTrigger: { trigger: root.querySelector('[data-ss-cards]'), start: 'top 85%', once: true } });
+    tl.from(cards, { y: 60, autoAlpha: 0, duration: DUR.base, ease: EASE.heavy, stagger: 0.1, clearProps: 'transform' }, 0);
+    tl.from(root.querySelectorAll('.card__rule'), { scaleX: 0, duration: DUR.slow, ease: EASE.enter, stagger: 0.1 }, 0.3);
+  });
+</script>

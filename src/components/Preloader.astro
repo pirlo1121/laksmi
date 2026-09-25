@@ -1,0 +1,137 @@
+---
+import Yantra from './Yantra.astro';
+---
+
+<div class="preloader" data-preloader aria-hidden="true">
+  <div class="preloader__inner">
+    <Yantra class="preloader__yantra" />
+    <p class="preloader__text">Bienvenidos</p>
+  </div>
+</div>
+
+<style>
+  /* Solo existe con JS, sin reduced-motion y en la primera visita de la sesión. */
+  .preloader {
+    display: none;
+  }
+  :global(html.js:not(.no-preloader)) .preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    display: grid;
+    place-items: center;
+    background: var(--ink);
+    /* Salvavidas: si el JS falla, el preloader se va solo. */
+    animation: preloader-failsafe 0.4s 5s forwards;
+  }
+  .preloader__inner {
+    display: grid;
+    justify-items: center;
+    gap: 28px;
+  }
+  .preloader :global(.preloader__yantra) {
+    width: 200px;
+    height: 200px;
+    color: var(--sand);
+    visibility: hidden; /* GSAP lo muestra cuando empieza a trazar */
+    --yantra-stroke: 1.5px;
+  }
+  .preloader__text {
+    margin: 0;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--text);
+    opacity: 0;
+  }
+  @media (max-width: 767px) {
+    .preloader :global(.preloader__yantra) {
+      width: 120px;
+      height: 120px;
+    }
+  }
+  @keyframes preloader-failsafe {
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+</style>
+
+<script>
+  import { finishIntro, loadGsap, lockScroll } from '../animations/setup';
+  import { PRELOADER } from '../animations/constants';
+
+  const root = document.querySelector<HTMLElement>('[data-preloader]');
+  const active = root && getComputedStyle(root).display !== 'none';
+
+  if (!active) {
+    root?.remove();
+    finishIntro();
+  } else {
+    lockScroll(true);
+    void run(root);
+  }
+
+  /** Espera fuentes + imagen del hero, con un tope. */
+  function assetsReady() {
+    const img = document.querySelector<HTMLImageElement>('[data-hero-img]');
+    const imgReady = img && !img.complete ? new Promise((r) => img.addEventListener('load', r, { once: true })) : null;
+    return Promise.race([
+      Promise.all([document.fonts?.ready, imgReady]),
+      new Promise((r) => setTimeout(r, PRELOADER.maxWait * 1000)),
+    ]);
+  }
+
+  async function run(root: HTMLElement) {
+    const ready = assetsReady();
+    const { gsap } = await loadGsap();
+    root.style.animation = 'none'; // desactiva el salvavidas CSS
+    const svg = root.querySelector<SVGSVGElement>('.preloader__yantra')!;
+    const text = root.querySelector('.preloader__text');
+    const gates = svg.querySelectorAll('.y-gate .y-draw');
+    const core = svg.querySelectorAll('.y-core .y-draw');
+
+    gsap.set([gates, core], { drawSVG: '0%' });
+    gsap.set(svg, { visibility: 'visible' });
+
+    // 0.0s el yantra se traza: primero las puertas, luego el centro.
+    const draw = gsap.timeline();
+    draw
+      .to(gates, { drawSVG: '100%', duration: 0.55, ease: 'power2.inOut', stagger: 0.02 })
+      .to(core, { drawSVG: '100%', duration: 0.5, ease: 'power2.inOut', stagger: 0.012 }, 0.3)
+      .to(text, { opacity: 1, duration: 0.4 }, 0.9);
+
+    await Promise.all([draw.then(), ready, new Promise((r) => setTimeout(r, 1000))]);
+
+    // FLIP: el yantra del preloader viaja al lugar del yantra del hero y se convierte en él.
+    const target = document.querySelector<SVGSVGElement>('[data-hero-yantra]');
+    const from = svg.getBoundingClientRect();
+    const exit = gsap.timeline({
+      onComplete: () => {
+        root.remove();
+        lockScroll(false);
+      },
+    });
+    finishIntro();
+
+    if (target) {
+      const to = target.getBoundingClientRect();
+      exit.to(svg, {
+        x: to.left + to.width / 2 - (from.left + from.width / 2),
+        y: to.top + to.height / 2 - (from.top + from.height / 2),
+        scale: to.width / from.width,
+        opacity: 0.9,
+        duration: 1.1,
+        ease: 'expo.inOut',
+      });
+      exit.set(target, { autoAlpha: 0.9 });
+    }
+    exit
+      .to(text, { opacity: 0, duration: 0.3 }, 0)
+      .to(root, { backgroundColor: 'rgba(10,14,21,0)', duration: 0.9, ease: 'power2.inOut' }, 0.15)
+      .set(svg, { autoAlpha: 0 });
+  }
+</script>

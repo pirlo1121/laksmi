@@ -1,0 +1,165 @@
+---
+import { cifras } from '../data/site';
+---
+
+<section class="cifras" aria-label="La firma en cifras" data-cifras>
+  <span class="cifras__rule" aria-hidden="true"></span>
+  <div class="container">
+    <ul class="cifras__grid" role="list">
+      {
+        cifras.map((c) => (
+          <li class="cifras__cell">
+            <span class="cifras__line" aria-hidden="true" />
+            <strong
+              class:list={['cifras__num', { 'is-accent': c.texto }]}
+              data-count={c.valor ?? undefined}
+              data-prefix={c.prefijo}
+              data-text={c.texto ? '' : undefined}
+            >
+              {c.texto ?? `${c.prefijo}${c.valor}`}
+            </strong>
+            <span class="label cifras__label">{c.etiqueta}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .cifras {
+    position: relative;
+    padding-block: clamp(4rem, 10vh, 7rem);
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+  }
+  .cifras__rule {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--sand);
+    transform-origin: left;
+  }
+  .cifras__grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .cifras__cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem clamp(1rem, 2vw, 2rem) 2rem;
+  }
+  .cifras__line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: var(--line);
+    transform-origin: top;
+  }
+  .cifras__cell:last-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 1px;
+    background: var(--line);
+  }
+  .cifras__num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 9vw;
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .cifras__num.is-accent {
+    color: var(--sand);
+    font-size: 5.4vw; /* GRATIS es una palabra larga: mantiene la línea base de la fila */
+    line-height: 1.2;
+  }
+  .cifras__label {
+    max-width: 14ch;
+  }
+
+  @media (max-width: 767px) {
+    .cifras__grid {
+      grid-template-columns: repeat(2, 1fr);
+      row-gap: 1rem;
+    }
+    .cifras__num {
+      font-size: 16vw;
+    }
+    .cifras__num.is-accent {
+      font-size: 11vw;
+    }
+    .cifras__cell:nth-child(2)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 1px;
+      background: var(--line);
+    }
+  }
+</style>
+
+<script>
+  import { scene } from '../animations/setup';
+  import { DUR, EASE } from '../animations/constants';
+  import { split } from '../animations/reveal';
+
+  const root = document.querySelector<HTMLElement>('[data-cifras]')!;
+
+  scene(2, ({ gsap, c }) => {
+    if (c.reduce) return; // valores finales, sin contar
+
+    const trigger = { trigger: root, start: 'top 75%', once: true };
+    const tl = gsap.timeline({ scrollTrigger: trigger });
+
+    tl.from(root.querySelector('.cifras__rule'), { scaleX: 0, duration: DUR.slow, ease: EASE.enter }, 0);
+    tl.from(root.querySelectorAll('.cifras__line'), { scaleY: 0, duration: 0.8, ease: EASE.heavy, stagger: 0.1 }, 0.1);
+
+    root.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
+      const end = Number(el.dataset.count);
+      const prefix = el.dataset.prefix ?? '';
+      const pad = prefix === '0';
+      const n = { v: 0 };
+      el.textContent = pad ? '00' : `${prefix}0`;
+      tl.to(
+        n,
+        {
+          v: end,
+          duration: DUR.slow,
+          ease: 'power2.out',
+          onUpdate: () => {
+            const v = Math.round(n.v);
+            el.textContent = pad ? String(v).padStart(2, '0') : `${prefix}${v}`;
+          },
+        },
+        0.3,
+      );
+    });
+
+    const gratis = root.querySelector<HTMLElement>('[data-text]');
+    if (gratis) {
+      const chars = split(gratis, 'chars', 'cifras__char');
+      tl.from(chars, { yPercent: 110, duration: DUR.base, ease: EASE.enter, stagger: 0.05 }, 0.4);
+    }
+
+    tl.from(root.querySelectorAll('.cifras__label'), { y: 20, autoAlpha: 0, duration: DUR.base, ease: EASE.heavy, stagger: 0.08 }, 0.5);
+  });
+</script>

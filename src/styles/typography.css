@@ -1,0 +1,64 @@
+/* Tipografía como arquitectura: 900 en mayúsculas + 300 itálica en Sand. */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.display .line {
+  display: block;
+}
+
+.display .light {
+  display: block;
+  font-weight: 300;
+  font-style: italic;
+  text-transform: none;
+  color: var(--sand);
+  letter-spacing: -0.02em;
+}
+
+/* Tamaño de títulos de sección (áreas, seguridad social, equipo, contacto). */
+.display--section {
+  font-size: clamp(3rem, 7vw, 7.5rem);
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--sand);
+  margin: 0;
+}
+
+.lead {
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  line-height: 1.55;
+  max-width: 44ch;
+  color: var(--text);
+}
+
+.label {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Máscara para reveals de líneas/letras. */
+.mask {
+  display: block;
+  overflow: hidden;
+  /* Deja aire para descendentes e itálicas. */
+  padding-block: 0.16em 0.1em;
+  margin-block: -0.16em -0.1em;
+}

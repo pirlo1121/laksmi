@@ -1,0 +1,230 @@
+---
+import { contacto } from '../../data/site';
+import Yantra from '../Yantra.astro';
+import ConsultaForm from './ConsultaForm.astro';
+---
+
+<section class="contacto" id="contacto" aria-labelledby="contacto-title" data-contacto>
+  <div class="container contacto__grid">
+    <div class="contacto__info">
+      <Yantra class="contacto__yantra" />
+      <p class="eyebrow">Estamos de su lado</p>
+      <h2 class="display display--section" id="contacto-title">
+        <span class="mask"><span class="line">Agende su</span></span>
+        <span class="mask"><span class="light">Consulta gratis</span></span>
+      </h2>
+      <p class="lead" data-contacto-fade>
+        La primera consulta con nuestros abogados no tiene ningún costo. Cuéntenos su caso y le daremos un
+        concepto jurídico serio.
+      </p>
+
+      <dl class="datos" data-contacto-fade>
+        <div>
+          <dt>Ubicación</dt>
+          <dd>
+            {contacto.direccion}<br />
+            <span class="dim">{contacto.referencia} · {contacto.ciudad}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Horarios</dt>
+          <dd>
+            {
+              contacto.horarios.map((h) => (
+                <>
+                  {h.dias} · {h.horas}
+                  <br />
+                </>
+              ))
+            }
+            <span class="dim">{contacto.horarioNota}</span>
+          </dd>
+        </div>
+        <div>
+          <dt>Contacto</dt>
+          <dd>
+            <a href={contacto.whatsappLink} target="_blank" rel="noopener">{contacto.whatsapp}</a><br />
+            <a href={`mailto:${contacto.email}`}>{contacto.email}</a>
+          </dd>
+        </div>
+      </dl>
+
+      <div class="mapa" data-contacto-fade>
+        <button class="btn btn--ghost" type="button" data-mapa-btn aria-controls="mapa-frame" aria-expanded="false">
+          Ver mapa
+        </button>
+        <div class="mapa__frame" id="mapa-frame" data-mapa hidden></div>
+      </div>
+    </div>
+
+    <div class="contacto__form">
+      <ConsultaForm />
+    </div>
+  </div>
+</section>
+
+<style>
+  .contacto {
+    position: relative;
+    padding-block: clamp(5rem, 12vw, 10rem);
+    overflow: hidden;
+  }
+  .contacto__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(2.5rem, 6vw, 7rem);
+    align-items: start;
+  }
+  .contacto__info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .contacto__info :global(.contacto__yantra) {
+    width: 40vh;
+    height: 40vh;
+    max-width: 100%;
+    color: var(--sand);
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+    --yantra-stroke: 1.25px;
+  }
+  .contacto__info .display {
+    font-size: clamp(3rem, 7vw, 7.5rem);
+  }
+
+  .datos {
+    display: grid;
+    gap: 1.25rem;
+    margin: 1rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .datos > div {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1rem;
+  }
+  .datos dt {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--sand);
+    padding-top: 4px;
+  }
+  .datos dd {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .datos a {
+    text-decoration-color: var(--line);
+    text-underline-offset: 3px;
+  }
+  .datos a:hover {
+    color: var(--sand);
+  }
+  .dim {
+    color: var(--text-dim);
+  }
+  .mapa__frame {
+    margin-top: 1rem;
+    aspect-ratio: 16 / 10;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .mapa__frame[hidden] {
+    display: none;
+  }
+  .mapa__frame :global(iframe) {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    filter: grayscale(1) invert(0.9) hue-rotate(180deg);
+  }
+
+  @media (max-width: 767px) {
+    .contacto__grid {
+      grid-template-columns: 1fr;
+    }
+    /* El formulario primero; los datos después; el yantra de fondo. */
+    .contacto__form {
+      order: -1;
+    }
+    .contacto__info :global(.contacto__yantra) {
+      position: absolute;
+      top: 4rem;
+      right: -20vw;
+      width: 90vw;
+      height: 90vw;
+      opacity: 0.06;
+      z-index: -1;
+      margin: 0;
+    }
+    .contacto__info .display {
+      font-size: 13vw;
+    }
+    .datos > div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+  }
+</style>
+
+<script>
+  import { scene } from '../../animations/setup';
+  import { DUR, EASE } from '../../animations/constants';
+  import { revealLines } from '../../animations/reveal';
+  import { contacto } from '../../data/site';
+
+  const root = document.querySelector<HTMLElement>('[data-contacto]')!;
+
+  // Mapa diferido: el iframe solo se carga al pedirlo. [PENDIENTE] ubicación exacta.
+  const mapaBtn = root.querySelector<HTMLButtonElement>('[data-mapa-btn]')!;
+  const mapa = root.querySelector<HTMLElement>('[data-mapa]')!;
+  mapaBtn.addEventListener('click', () => {
+    if (!mapa.firstElementChild) {
+      const iframe = document.createElement('iframe');
+      iframe.title = 'Ubicación de LAKSMI Abogados en Google Maps';
+      iframe.loading = 'lazy';
+      iframe.referrerPolicy = 'no-referrer-when-downgrade';
+      iframe.src = `https://www.google.com/maps?q=${encodeURIComponent(contacto.mapaQuery)}&output=embed`;
+      mapa.append(iframe);
+    }
+    mapa.hidden = !mapa.hidden;
+    mapaBtn.setAttribute('aria-expanded', String(!mapa.hidden));
+    mapaBtn.textContent = mapa.hidden ? 'Ver mapa' : 'Ocultar mapa';
+  });
+
+  scene(7, ({ gsap, c }) => {
+    if (c.reduce) return; // el yantra aparece ya dibujado
+
+    // La historia se cierra: el yantra se traza completo una última vez.
+    const yantra = root.querySelector('.contacto__yantra')!;
+    const gates = yantra.querySelectorAll('.y-gate .y-draw');
+    const core = yantra.querySelectorAll('.y-core .y-draw');
+    const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: 'top 65%', once: true } });
+    tl.fromTo(core, { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.2, ease: 'power2.inOut', stagger: 0.015 }, 0);
+    tl.fromTo(gates, { drawSVG: '50% 50%' }, { drawSVG: '0% 100%', duration: 1.1, ease: 'power2.inOut' }, 0.5);
+
+    revealLines(gsap, root.querySelector('.display')!, root, 'top 65%');
+    gsap.from(root.querySelectorAll('[data-contacto-fade]'), {
+      y: 30,
+      autoAlpha: 0,
+      duration: DUR.base,
+      ease: EASE.heavy,
+      stagger: 0.1,
+      scrollTrigger: { trigger: root, start: 'top 55%', once: true },
+    });
+    gsap.from(root.querySelectorAll('[data-form-field]'), {
+      y: 24,
+      autoAlpha: 0,
+      duration: DUR.base,
+      ease: EASE.heavy,
+      stagger: 0.06,
+      scrollTrigger: { trigger: root.querySelector('[data-form]'), start: 'top 80%', once: true },
+    });
+  });
+</script>

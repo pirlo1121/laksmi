@@ -1,0 +1,306 @@
+---
+import { areas } from '../../data/areas';
+import Yantra from '../Yantra.astro';
+import AreaStep from './AreaStep.astro';
+import AreasMobile from './AreasMobile.astro';
+---
+
+<section class="areas" id="areas" aria-labelledby="areas-title" data-areas>
+  <div class="grid-lines" aria-hidden="true">
+    {Array.from({ length: 12 }, () => <span />)}
+  </div>
+
+  <header class="areas__head container">
+    <p class="eyebrow">Las protagonistas de la firma</p>
+    <h2 class="display areas__title" id="areas-title">
+      <span class="mask"><span class="line">Cuatro áreas</span></span>
+    </h2>
+  </header>
+
+  <!-- Desktop: escenario fijado. Sin JS / reduced motion: bloques apilados. -->
+  <div class="areas__desktop container">
+    <div class="areas__visual" aria-hidden="true">
+      <div class="areas__yantra-box">
+        <Yantra class="areas__yantra" lit={areas[0].gate} />
+        <span class="areas__num"><span data-areas-num>{areas[0].numero}</span></span>
+      </div>
+    </div>
+    <div class="areas__steps">
+      {areas.map((area) => <AreaStep area={area} total={areas.length} />)}
+    </div>
+    <ol class="areas__progress" aria-hidden="true">
+      {areas.map((_, i) => <li class:list={{ 'is-active': i === 0 }} />)}
+    </ol>
+  </div>
+
+  <div class="areas__mobile container">
+    <AreasMobile />
+  </div>
+</section>
+
+<style>
+  .areas {
+    position: relative;
+    padding-top: clamp(4rem, 10vw, 8rem);
+    padding-bottom: clamp(3rem, 8vw, 6rem);
+  }
+  .areas .grid-lines {
+    opacity: 0.5;
+  }
+  .areas__head {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: clamp(2rem, 5vw, 4rem);
+  }
+  .areas__title {
+    font-size: clamp(3rem, 9vw, 9rem);
+  }
+  .areas__visual,
+  .areas__progress {
+    display: none;
+  }
+  .areas__mobile {
+    display: none;
+  }
+
+  /* ---- Modo fijado ---- */
+  .areas.is-pinned {
+    height: 100vh;
+    padding: 0;
+    overflow: hidden;
+  }
+  .areas.is-pinned .areas__head {
+    position: absolute;
+    top: calc(var(--nav-h) * 0.5 + 1rem);
+    left: 0;
+    right: 0;
+    z-index: 2;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 1.25rem;
+    margin: 0;
+  }
+  .areas.is-pinned .areas__title {
+    font-size: clamp(1.1rem, 1.6vw, 1.5rem);
+    letter-spacing: 0.02em;
+  }
+  .areas.is-pinned .areas__head .eyebrow {
+    order: 2;
+    color: var(--text-dim);
+  }
+  .areas.is-pinned .areas__desktop {
+    position: relative;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: clamp(2rem, 4vw, 5rem);
+    align-items: center;
+    padding-top: calc(var(--nav-h) * 0.5 + 3rem);
+    padding-bottom: 2rem;
+  }
+  .areas.is-pinned .areas__visual {
+    display: grid;
+    place-items: center;
+  }
+  .areas__yantra-box {
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+  .areas__yantra-box :global(.areas__yantra) {
+    width: min(60vh, 38vw);
+    height: min(60vh, 38vw);
+    color: var(--sand);
+    opacity: 0.9;
+    --gate-color: rgba(241, 209, 152, 0.4);
+    --yantra-stroke: 1.25px;
+    --yantra-stroke-lit: 3px;
+  }
+  .areas__num {
+    position: absolute;
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: min(9vh, 5.5vw);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .areas__num span {
+    display: block;
+  }
+  .areas.is-pinned .areas__steps {
+    position: relative;
+    height: 100%;
+  }
+  .areas.is-pinned .areas__progress {
+    position: absolute;
+    right: calc(var(--gutter) * 0.4);
+    top: 50%;
+    translate: 0 -50%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .areas__progress li {
+    width: 2px;
+    height: 40px;
+    background: var(--line);
+    transition: background-color 0.4s var(--ease-out);
+  }
+  .areas__progress li.is-active {
+    background: var(--sand);
+  }
+
+  @media (max-width: 767px) {
+    .areas__desktop {
+      display: none;
+    }
+    .areas__mobile {
+      display: block;
+    }
+    .areas__title {
+      font-size: 14vw;
+    }
+  }
+</style>
+
+<script>
+  import { registerAnchor, scene } from '../../animations/setup';
+  import { EASE } from '../../animations/constants';
+  import { areas } from '../../data/areas';
+
+  const root = document.querySelector<HTMLElement>('[data-areas]')!;
+  const TOTAL = areas.length;
+  const EXIT = 0.35; // duración del cierre ("cuatro puertas, un mismo lado")
+  const DURATION = TOTAL + EXIT;
+
+  function emit(gates: string[]) {
+    window.dispatchEvent(new CustomEvent('laksmi:area', { detail: { gates } }));
+  }
+
+  scene(3, ({ gsap, c }) => {
+    /* ---- Móvil: acordeón; las anclas apuntan a sus bloques ---- */
+    if (c.mobile) {
+      const offs = areas.map((a) =>
+        registerAnchor(`#${a.id}`, () => {
+          const item = document.getElementById(`m-${a.id}`) as HTMLDetailsElement | null;
+          if (!item) return null;
+          item.open = true;
+          return item.getBoundingClientRect().top + window.scrollY - 80;
+        }),
+      );
+      return () => offs.forEach((off) => off());
+    }
+
+    /* ---- Reduced motion o pantallas bajas: bloques apilados, sin pin ---- */
+    if (c.reduce || !c.tall) return;
+
+    /* ---- Desktop: PIN de 4 pasos con el yantra girando ---- */
+    root.classList.add('is-pinned');
+    const yantra = root.querySelector<SVGSVGElement>('.areas__yantra')!;
+    const gateEls = yantra.querySelectorAll<SVGGElement>('.y-gate');
+    const num = root.querySelector<HTMLElement>('[data-areas-num]')!;
+    const segments = root.querySelectorAll('.areas__progress li');
+    const steps = [...root.querySelectorAll<HTMLElement>('[data-step]')];
+
+    const partsOf = (step: HTMLElement) => ({
+      lines: step.querySelectorAll('[data-step-line]'),
+      fades: step.querySelectorAll('[data-step-fade]'),
+    });
+
+    // Estado inicial: solo el área 01 visible.
+    steps.forEach((step, i) => {
+      if (i === 0) return;
+      const { lines, fades } = partsOf(step);
+      gsap.set(step, { autoAlpha: 0 });
+      gsap.set(lines, { clipPath: 'inset(100% 0% 0% 0%)', yPercent: 30 });
+      gsap.set(fades, { y: 40, autoAlpha: 0 });
+    });
+
+    const tl = gsap.timeline({
+      defaults: { ease: EASE.scrub },
+      scrollTrigger: {
+        trigger: root,
+        start: 'top top',
+        end: () => `+=${window.innerHeight * TOTAL}`,
+        pin: true,
+        scrub: 0.8,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => setActive(self.progress * DURATION),
+        onLeave: () => emit(areas.map((a) => a.gate)),
+        onLeaveBack: () => emit([]),
+      },
+    });
+
+    for (let i = 1; i < TOTAL; i++) {
+      const prev = steps[i - 1];
+      const step = steps[i];
+      const { lines, fades } = partsOf(step);
+      // Inicio del tramo: el yantra rota hasta que la puerta i queda a la derecha.
+      tl.to(yantra, { rotation: areas[i].rotacion, duration: 0.4, ease: EASE.turn }, i);
+      // +5%: sale el contenido anterior.
+      tl.to(prev, { y: -60, autoAlpha: 0, duration: 0.15, ease: 'power2.in' }, i + 0.05);
+      // +8%: entra el nuevo; nombre con clip-path de abajo hacia arriba, luego el resto en stagger.
+      tl.set(step, { autoAlpha: 1 }, i + 0.18);
+      tl.to(lines, { clipPath: 'inset(0% 0% 0% 0%)', yPercent: 0, duration: 0.25, stagger: 0.05, ease: 'power3.out' }, i + 0.18);
+      tl.to(fades, { y: 0, autoAlpha: 1, duration: 0.2, stagger: 0.03, ease: 'power3.out' }, i + 0.25);
+    }
+    // Salida: zoom out del yantra con las cuatro puertas encendidas.
+    tl.to(yantra, { scale: 0.6, autoAlpha: 0, duration: EXIT, ease: 'power2.in' }, TOTAL);
+
+    /* Estado discreto: puerta encendida, número central y barra de progreso. */
+    let active = 0;
+    let allLit = false;
+    function setActive(t: number) {
+      const next = Math.max(0, Math.min(TOTAL - 1, Math.floor(t - 0.1)));
+      const lit = t >= TOTAL - 0.02;
+      if (next === active && lit === allLit) return;
+      const dir = next > active ? 1 : -1;
+      const changed = next !== active;
+      active = next;
+      allLit = lit;
+
+      const gate = areas[active].gate;
+      gateEls.forEach((g) => g.classList.toggle('is-lit', lit || g.dataset.gate === gate));
+      segments.forEach((s, i) => s.classList.toggle('is-active', i === active));
+      emit(areas.slice(0, active + 1).map((a) => a.gate));
+
+      if (changed) {
+        gsap.fromTo(
+          num,
+          { yPercent: 100 * dir, autoAlpha: 0 },
+          {
+            yPercent: 0,
+            autoAlpha: 1,
+            duration: 0.5,
+            ease: EASE.heavy,
+            onStart: () => {
+              num.textContent = areas[active].numero;
+            },
+          },
+        );
+      }
+    }
+
+    // Anclas #laboral, #civil, #seguridad-social, #penal → tramo correcto del pin.
+    const st = tl.scrollTrigger!;
+    const offs = areas.map((a, i) =>
+      registerAnchor(`#${a.id}`, () => st.start + ((st.end - st.start) * (i + 0.5)) / DURATION),
+    );
+
+    return () => {
+      root.classList.remove('is-pinned');
+      offs.forEach((off) => off());
+      gateEls.forEach((g) => g.classList.toggle('is-lit', g.dataset.gate === areas[0].gate));
+      num.textContent = areas[0].numero;
+      active = 0;
+    };
+  });
+</script>

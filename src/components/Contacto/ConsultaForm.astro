@@ -1,0 +1,349 @@
+---
+import { areas } from '../../data/areas';
+import { nombrePaquete, paquetes } from '../../data/paquetes';
+import { contacto } from '../../data/site';
+---
+
+<form class="form" novalidate data-form>
+  <div class="form__row" data-form-field>
+    <label for="f-area">Área <span aria-hidden="true">*</span></label>
+    <select id="f-area" name="area" required aria-describedby="f-area-err">
+      <option value="">Seleccione un área</option>
+      {areas.map((a) => <option value={a.id}>{a.nombre}</option>)}
+    </select>
+    <p class="form__err" id="f-area-err" aria-live="polite"></p>
+  </div>
+
+  <div class="form__row" data-form-field data-paquete-row hidden>
+    <label for="f-paquete">Paquete</label>
+    <select id="f-paquete" name="paquete">
+      <option value="">Aún no sé / quiero asesoría</option>
+      {paquetes.map((p) => <option value={p.id}>{nombrePaquete(p)} · {p.descripcion}</option>)}
+    </select>
+  </div>
+
+  <div class="form__row" data-form-field>
+    <label for="f-nombre">Nombre <span aria-hidden="true">*</span></label>
+    <input id="f-nombre" name="nombre" type="text" autocomplete="name" required aria-describedby="f-nombre-err" />
+    <p class="form__err" id="f-nombre-err" aria-live="polite"></p>
+  </div>
+
+  <div class="form__split">
+    <div class="form__row" data-form-field>
+      <label for="f-correo">Correo <span aria-hidden="true">*</span></label>
+      <input id="f-correo" name="correo" type="email" autocomplete="email" required aria-describedby="f-correo-err" />
+      <p class="form__err" id="f-correo-err" aria-live="polite"></p>
+    </div>
+    <div class="form__row" data-form-field>
+      <label for="f-celular">Celular <span aria-hidden="true">*</span></label>
+      <input
+        id="f-celular"
+        name="celular"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        required
+        pattern="[0-9 +()\-]{7,}"
+        aria-describedby="f-celular-err"
+      />
+      <p class="form__err" id="f-celular-err" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <div class="form__row" data-form-field>
+    <label for="f-mensaje">Cuéntenos su caso <span class="form__opt">(opcional)</span></label>
+    <textarea id="f-mensaje" name="mensaje" rows="4"></textarea>
+  </div>
+
+  <div class="form__check" data-form-field>
+    <input id="f-datos" name="datos" type="checkbox" required aria-describedby="f-datos-err" />
+    <label for="f-datos">
+      Autorizo el tratamiento de mis datos personales según la{' '}
+      <a href="/politica-de-datos" target="_blank">Política de Tratamiento de Datos</a>.
+    </label>
+    <p class="form__err" id="f-datos-err" aria-live="polite"></p>
+  </div>
+
+  <div data-form-field>
+    <button class="btn btn--primary form__submit" type="submit" data-submit>
+      Solicitar consulta gratis
+    </button>
+    <p class="form__note">Su solicitud se envía directo a nuestro WhatsApp con total confidencialidad.</p>
+  </div>
+
+  <div class="form__alt" data-form-field>
+    <a class="btn btn--ghost" href={contacto.whatsappLink} target="_blank" rel="noopener">WhatsApp directo</a>
+    <a class="btn btn--ghost" href={`mailto:${contacto.email}`}>Escribir correo</a>
+  </div>
+</form>
+
+<style>
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    background: var(--ink-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .form__row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .form__row[hidden] {
+    display: none;
+  }
+  .form__split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  label {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--text);
+  }
+  label span[aria-hidden] {
+    color: var(--sand);
+  }
+  .form__opt {
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    font: inherit;
+    font-size: 16px; /* evita zoom en iOS */
+    color: var(--text);
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    transition:
+      border-color 0.3s var(--ease-out),
+      box-shadow 0.4s var(--ease-out);
+  }
+  select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--sand) 50%),
+      linear-gradient(135deg, var(--sand) 50%, transparent 50%);
+    background-position:
+      calc(100% - 20px) 50%,
+      calc(100% - 15px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+  }
+  textarea {
+    resize: vertical;
+    min-height: 110px;
+  }
+  input:hover,
+  select:hover,
+  textarea:hover {
+    border-color: rgba(217, 217, 217, 0.3);
+  }
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--sand);
+    box-shadow: 0 0 0 3px rgba(241, 209, 152, 0.18);
+  }
+  [aria-invalid='true'] {
+    border-color: #e59a8a;
+  }
+  /* Pulso Sand cuando llega una preselección. */
+  :global(.is-pulsing) {
+    animation: pulse-sand 1.4s var(--ease-out) 2;
+  }
+  @keyframes pulse-sand {
+    0% {
+      box-shadow: 0 0 0 0 rgba(241, 209, 152, 0.6);
+      border-color: var(--sand);
+    }
+    100% {
+      box-shadow: 0 0 0 12px rgba(241, 209, 152, 0);
+    }
+  }
+  .form__err {
+    margin: 0;
+    font-size: 13px;
+    color: #f0b3a6;
+  }
+  .form__err:empty {
+    display: none;
+  }
+  .form__check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.4rem 0.75rem;
+    align-items: start;
+  }
+  .form__check input {
+    width: 20px;
+    min-height: 20px;
+    height: 20px;
+    margin-top: 2px;
+    padding: 0;
+    accent-color: var(--sand);
+  }
+  .form__check label {
+    font-size: 14px;
+    letter-spacing: 0;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+  .form__check a {
+    color: var(--sand);
+  }
+  .form__check .form__err {
+    grid-column: 2;
+  }
+  .form__submit {
+    width: 100%;
+    font-size: 16px;
+    min-height: 56px;
+  }
+  .form__submit:hover {
+    background: var(--sand);
+    color: var(--ink);
+  }
+  .form__submit[disabled] {
+    cursor: progress;
+    opacity: 0.85;
+  }
+  .form__note {
+    margin: 0.75rem 0 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .form__alt {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+  .form__alt .btn {
+    font-size: 14px;
+  }
+
+  @media (max-width: 480px) {
+    .form__split,
+    .form__alt {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  import { areas } from '../../data/areas';
+  import { nombrePaquete, paquetes } from '../../data/paquetes';
+  import { contacto } from '../../data/site';
+  import { initPreselectLinks, PRESELECT_EVENT, readPreselectFromUrl, type Preselect } from '../../scripts/preselect';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]')!;
+  const area = form.querySelector<HTMLSelectElement>('#f-area')!;
+  const paquete = form.querySelector<HTMLSelectElement>('#f-paquete')!;
+  const paqueteRow = form.querySelector<HTMLElement>('[data-paquete-row]')!;
+  const submit = form.querySelector<HTMLButtonElement>('[data-submit]')!;
+  const SS = 'seguridad-social';
+
+  function syncPaquete() {
+    paqueteRow.hidden = area.value !== SS;
+  }
+  area.addEventListener('change', syncPaquete);
+
+  function pulse(el: HTMLElement) {
+    el.classList.remove('is-pulsing');
+    void el.offsetWidth;
+    el.classList.add('is-pulsing');
+  }
+
+  function preselect({ area: a, paquete: p }: Preselect) {
+    if (a && areas.some((x) => x.id === a)) {
+      area.value = a;
+      pulse(area);
+    }
+    syncPaquete();
+    if (p && paquetes.some((x) => x.id === p)) {
+      paquete.value = p;
+      pulse(paquete);
+    }
+  }
+
+  initPreselectLinks();
+  document.addEventListener(PRESELECT_EVENT, (e) => preselect((e as CustomEvent<Preselect>).detail));
+  preselect(readPreselectFromUrl());
+
+  /* ---- Validación nativa con mensajes anunciados ---- */
+  const messages: Record<string, string> = {
+    area: 'Elija el área de su consulta.',
+    nombre: 'Escriba su nombre.',
+    correo: 'Escriba un correo válido.',
+    celular: 'Escriba un número de celular válido.',
+    datos: 'Debe autorizar el tratamiento de sus datos para continuar.',
+  };
+
+  function validate(field: HTMLInputElement | HTMLSelectElement) {
+    const err = document.getElementById(`${field.id}-err`);
+    if (!err) return true;
+    const ok = field.checkValidity();
+    field.setAttribute('aria-invalid', String(!ok));
+    err.textContent = ok ? '' : messages[field.name] ?? field.validationMessage;
+    return ok;
+  }
+
+  const fields = [...form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[required]')];
+  fields.forEach((f) =>
+    f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' ? 'change' : 'blur', () => {
+      if (f.getAttribute('aria-invalid') || f.value) validate(f);
+    }),
+  );
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const invalid = fields.filter((f) => !validate(f));
+    if (invalid.length) {
+      invalid[0].focus();
+      return;
+    }
+
+    // Plantilla de laksmi-abogados-datos.md §11.
+    const data = new FormData(form);
+    const areaNombre = areas.find((a) => a.id === data.get('area'))?.nombre ?? '';
+    const paq = paquetes.find((p) => p.id === data.get('paquete'));
+    const lines = [
+      'Hola LAKSMI Abogados, quiero agendar mi consulta gratis.',
+      `Área: ${areaNombre}`,
+      area.value === SS && paq ? `Paquete: ${nombrePaquete(paq)}` : null,
+      `Nombre: ${data.get('nombre')}`,
+      `Correo: ${data.get('correo')}`,
+      `Celular: ${data.get('celular')}`,
+      String(data.get('mensaje') ?? '').trim() ? `Caso: ${String(data.get('mensaje')).trim()}` : null,
+    ].filter(Boolean);
+
+    window.open(
+      `https://wa.me/${contacto.whatsappNumero}?text=${encodeURIComponent(lines.join('\n'))}`,
+      '_blank',
+      'noopener',
+    );
+
+    const label = submit.textContent;
+    submit.textContent = 'Abriendo WhatsApp…';
+    submit.disabled = true;
+    setTimeout(() => {
+      submit.textContent = label;
+      submit.disabled = false;
+    }, 2500);
+  });
+</script>

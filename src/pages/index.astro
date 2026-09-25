@@ -1,0 +1,35 @@
+---
+import Base from '../layouts/Base.astro';
+import Preloader from '../components/Preloader.astro';
+import Nav from '../components/Nav.astro';
+import Hero from '../components/Hero.astro';
+import YantraProgreso from '../components/YantraProgreso.astro';
+import Cifras from '../components/Cifras.astro';
+import Areas from '../components/Areas/Areas.astro';
+import SeguridadSocial from '../components/SeguridadSocial.astro';
+import Equipo from '../components/Equipo/Equipo.astro';
+import Testimonios from '../components/Testimonios.astro';
+import Contacto from '../components/Contacto/Contacto.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Base>
+  <Preloader />
+  <Nav />
+  <main id="contenido">
+    <Hero />
+    <Cifras />
+    <Areas />
+    <SeguridadSocial />
+    <Equipo />
+    <Testimonios />
+    <Contacto />
+  </main>
+  <Footer />
+  <YantraProgreso />
+</Base>
+
+<script>
+  // Arranca el orquestador (carga GSAP/Lenis y ejecuta las escenas registradas).
+  import '../animations/setup';
+</script>

@@ -1,0 +1,349 @@
+---
+import { testimonios } from '../data/testimonios';
+---
+
+<section
+  class="testi"
+  id="testimonios"
+  aria-roledescription="carrusel"
+  aria-labelledby="testi-title"
+  data-testi
+>
+  <div class="container testi__inner">
+    <p class="eyebrow testi__eyebrow" id="testi-title">Lo que dicen nuestros clientes</p>
+
+    <div class="testi__stage">
+      <span class="testi__mark" aria-hidden="true">“</span>
+      <button class="testi__arrow testi__arrow--prev" type="button" aria-label="Testimonio anterior" data-testi-prev>
+        ←
+      </button>
+      <div class="testi__quotes" aria-live="polite" data-testi-live>
+        {
+          testimonios.map((t, i) => (
+            <figure
+              class:list={['quote', { 'is-active': i === 0 }]}
+              role="group"
+              aria-roledescription="testimonio"
+              aria-label={`${i + 1} de ${testimonios.length}`}
+              data-quote
+            >
+              <blockquote class="quote__text" data-quote-text>
+                {t.texto}
+              </blockquote>
+              <figcaption class="quote__author">— {t.autor}</figcaption>
+            </figure>
+          ))
+        }
+      </div>
+      <button class="testi__arrow testi__arrow--next" type="button" aria-label="Testimonio siguiente" data-testi-next>
+        →
+      </button>
+    </div>
+
+    <div class="testi__controls">
+      <div class="testi__dots" role="group" aria-label="Elegir testimonio">
+        {
+          testimonios.map((t, i) => (
+            <button
+              class="testi__dot"
+              type="button"
+              aria-label={`Testimonio ${i + 1}: ${t.autor}`}
+              aria-current={i === 0 ? 'true' : undefined}
+              data-testi-dot
+            >
+              <span class="testi__fill" />
+            </button>
+          ))
+        }
+      </div>
+      <button class="testi__pause" type="button" aria-pressed="false" data-testi-pause>
+        <span class="off">Pausar</span><span class="on">Reanudar</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+  .testi {
+    position: relative;
+    background: var(--ink-2);
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    padding-block: clamp(5rem, 10vw, 8rem);
+    overflow: hidden;
+  }
+  .testi__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(2rem, 5vw, 3.5rem);
+  }
+  .testi__stage {
+    position: relative;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: clamp(1rem, 4vw, 4rem);
+  }
+  .testi__mark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -88%;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: 20vw;
+    line-height: 1;
+    color: var(--sand);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+  .testi__quotes {
+    position: relative;
+    display: grid;
+  }
+  .quote {
+    grid-area: 1 / 1;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    text-align: center;
+  }
+  /* Con JS se muestra una cita a la vez; sin JS, todas apiladas. */
+  :global(html.js) .quote:not(.is-active) {
+    visibility: hidden;
+  }
+  :global(html:not(.js)) .quote {
+    grid-area: auto;
+    margin-bottom: 3rem;
+  }
+  .quote__text {
+    margin: 0;
+    max-width: 30ch;
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(1.5rem, 3.2vw, 3.25rem);
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .quote__author {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+  .testi__arrow {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: none;
+    cursor: pointer;
+    font-size: 18px;
+    transition:
+      border-color 0.3s var(--ease-out),
+      color 0.3s var(--ease-out);
+  }
+  .testi__arrow:hover {
+    border-color: var(--sand);
+    color: var(--sand);
+  }
+  :global(html:not(.js)) .testi__arrow,
+  :global(html:not(.js)) .testi__controls {
+    display: none;
+  }
+  .testi__controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .testi__dots {
+    display: flex;
+    gap: 8px;
+  }
+  .testi__dot {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .testi__dot::before,
+  .testi__fill {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--line);
+  }
+  .testi__fill {
+    background: var(--sand);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .testi__dot[aria-current='true'] .testi__fill {
+    transform: scaleX(1);
+  }
+  .testi__pause {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--pill);
+    background: none;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .testi__pause .on,
+  .testi__pause[aria-pressed='true'] .off {
+    display: none;
+  }
+  .testi__pause[aria-pressed='true'] .on {
+    display: inline;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .testi__pause {
+      display: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .testi__stage {
+      grid-template-columns: 1fr;
+    }
+    .testi__arrow {
+      display: none;
+    }
+    .testi__mark {
+      font-size: 40vw;
+    }
+    .quote__text {
+      font-size: 6vw;
+    }
+  }
+</style>
+
+<script>
+  import { loadGsap, prefersReducedMotion } from '../animations/setup';
+  import { TESTIMONIO_MS } from '../animations/constants';
+  import { split } from '../animations/reveal';
+
+  const root = document.querySelector<HTMLElement>('[data-testi]')!;
+  const quotes = [...root.querySelectorAll<HTMLElement>('[data-quote]')];
+  const dots = [...root.querySelectorAll<HTMLButtonElement>('[data-testi-dot]')];
+  const live = root.querySelector<HTMLElement>('[data-testi-live]')!;
+  const pauseBtn = root.querySelector<HTMLButtonElement>('[data-testi-pause]')!;
+
+  const reduce = prefersReducedMotion();
+  let index = 0;
+  let userPaused = false;
+  let hovering = false;
+  let visible = false;
+
+  void loadGsap().then(({ gsap }) => {
+    const words = quotes.map((q) => split(q.querySelector<HTMLElement>('[data-quote-text]')!, 'words', 'quote__word'));
+    let timer: gsap.core.Tween | null = null;
+
+    function go(next: number, fromUser = false) {
+      next = (next + quotes.length) % quotes.length;
+      if (next === index) return;
+      const prev = index;
+      index = next;
+      // Con rotación automática no se anuncia cada cambio; al usar los controles, sí.
+      live.setAttribute('aria-live', fromUser ? 'polite' : 'off');
+      quotes.forEach((q, i) => q.classList.toggle('is-active', i === next));
+      dots.forEach((d, i) => (i === next ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current')));
+
+      if (!reduce) {
+        const out = quotes[prev];
+        const inn = quotes[next];
+        const outParts = [...words[prev], out.querySelector('.quote__author')];
+        const inParts = [...words[next], inn.querySelector('.quote__author')];
+        // La saliente sigue visible mientras sus palabras se desvanecen.
+        gsap.set(out, { visibility: 'visible' });
+        gsap.to(outParts, {
+          autoAlpha: 0,
+          duration: 0.3,
+          stagger: 0.01,
+          overwrite: true,
+          onComplete: () => {
+            gsap.set(out, { clearProps: 'visibility' });
+            gsap.set(outParts, { clearProps: 'opacity,visibility' });
+          },
+        });
+        gsap.fromTo(
+          inParts,
+          { y: 20, autoAlpha: 0 },
+          { y: 0, autoAlpha: 1, duration: 0.8, ease: 'power3.out', stagger: 0.015, delay: 0.3, overwrite: true },
+        );
+      }
+      restartTimer();
+    }
+
+    function restartTimer() {
+      timer?.kill();
+      dots.forEach((d) => gsap.set(d.querySelector('.testi__fill'), { clearProps: 'transform' }));
+      if (reduce) return;
+      const fill = dots[index].querySelector('.testi__fill');
+      timer = gsap.fromTo(
+        fill,
+        { scaleX: 0 },
+        { scaleX: 1, duration: TESTIMONIO_MS / 1000, ease: 'none', onComplete: () => go(index + 1) },
+      );
+      syncPause();
+    }
+
+    function syncPause() {
+      if (!timer) return;
+      userPaused || hovering || !visible ? timer.pause() : timer.resume();
+    }
+
+    root.querySelector('[data-testi-prev]')!.addEventListener('click', () => go(index - 1, true));
+    root.querySelector('[data-testi-next]')!.addEventListener('click', () => go(index + 1, true));
+    dots.forEach((d, i) => d.addEventListener('click', () => go(i, true)));
+    pauseBtn.addEventListener('click', () => {
+      userPaused = !userPaused;
+      pauseBtn.setAttribute('aria-pressed', String(userPaused));
+      syncPause();
+    });
+
+    // Pausa al hover, al enfocar y cuando la sección no está visible.
+    root.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse') (hovering = true), syncPause();
+    });
+    root.addEventListener('pointerleave', () => ((hovering = false), syncPause()));
+    root.addEventListener('focusin', () => ((hovering = true), syncPause()));
+    root.addEventListener('focusout', (e) => {
+      if (!root.contains(e.relatedTarget as Node)) (hovering = false), syncPause();
+    });
+    new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      syncPause();
+    }).observe(root);
+
+    // Swipe en táctil.
+    let startX = 0;
+    const stage = root.querySelector<HTMLElement>('.testi__stage')!;
+    stage.addEventListener('pointerdown', (e) => (startX = e.clientX));
+    stage.addEventListener('pointerup', (e) => {
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 50) go(index + (dx < 0 ? 1 : -1), true);
+    });
+
+    restartTimer();
+  });
+</script>

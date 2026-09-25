@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+import { contacto } from '../data/site';
+---
+
+<Base title="Política de Tratamiento de Datos — LAKSMI ABOGADOS">
+  <main id="contenido" class="container politica">
+    <a class="volver" href="/">← Volver al inicio</a>
+    <p class="eyebrow">Ley 1581 de 2012</p>
+    <h1 class="display">
+      <span class="line">Política de</span>
+      <span class="light">tratamiento de datos</span>
+    </h1>
+    <div class="pendiente" role="note">
+      <strong>[PENDIENTE]</strong> El texto legal de la Política de Tratamiento de Datos Personales debe
+      entregarlo la firma. Esta página no debe publicarse sin ese texto.
+    </div>
+    <p>
+      Para consultas sobre el tratamiento de sus datos personales puede escribir a
+      <a href={`mailto:${contacto.email}`}>{contacto.email}</a>.
+    </p>
+  </main>
+</Base>
+
+<style>
+  .politica {
+    min-height: 100vh;
+    padding-block: 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 900px;
+  }
+  .politica .display {
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+  }
+  .volver {
+    color: var(--text-dim);
+    text-decoration: none;
+    margin-bottom: 2rem;
+  }
+  .volver:hover {
+    color: var(--sand);
+  }
+  .pendiente {
+    padding: 1.5rem;
+    border: 1px dashed var(--sand);
+    border-radius: var(--radius);
+    color: var(--text);
+  }
+  .pendiente strong {
+    color: var(--sand);
+  }
+  .politica a {
+    color: var(--sand);
+  }
+</style>

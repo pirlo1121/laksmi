@@ -1,0 +1,34 @@
+:root {
+  /* Manual de Marca 2024 */
+  --brand-blue: #244266;
+  --brand-dark-blue: #273848;
+  --brand-white-grey: #d9d9d9;
+  --brand-dark-grey: #3a3a3a;
+  --brand-sand: #f1d198;
+
+  /* Derivados (sitio anterior) */
+  --ink: #0a0e15;
+  --ink-2: #0e1420;
+  --ink-3: #16202e;
+  --blue-glow: #5b7ca8;
+  --text-dim: #9aa2ac;
+  --line: rgba(217, 217, 217, 0.14);
+
+  --text: var(--brand-white-grey);
+  --sand: var(--brand-sand);
+
+  /* Tipografía */
+  --font-display: 'Red Hat Display', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+
+  /* Layout */
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --maxw: 1440px;
+  --nav-h: 72px;
+  --radius: 14px;
+  --pill: 100px;
+
+  /* Movimiento (CSS) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: dark;
+}
