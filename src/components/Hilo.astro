@@ -5,14 +5,27 @@
  * (el centro del logo final), por el centro de la pantalla y DETRÁS del contenido (z-index -1):
  * se ve donde la sección es transparente y pasa por detrás de los paneles con fondo.
  *
- * Rendimiento: una sola línea que se llena con scaleY (solo compositor) y una cabeza `sticky`
- * a media pantalla, sin JS por cuadro.
+ * Su cabeza es un loto pequeño con un halo cálido. Cada bloque de la página espera en penumbra y se
+ * ilumina cuando el loto lo alcanza: la flor alumbra el conocimiento de la firma.
+ *
+ * Rendimiento: el hilo se llena con scaleY (solo compositor), la cabeza es `sticky` a media pantalla
+ * y la luz de los bloques es un IntersectionObserver + opacidad. Nada corre por cuadro.
  */
 ---
 
 <div class="hilo" aria-hidden="true" data-hilo>
   <span class="hilo__fill" data-hilo-fill></span>
-  <span class="hilo__head"><span></span></span>
+  <span class="hilo__head">
+    <span class="hilo__halo"></span>
+    <svg class="hilo__lotus" viewBox="-16 -16 32 32">
+      <!-- pétalos exteriores, interiores y central (de atrás hacia adelante) -->
+      <path d="M 0 7 C -9 7 -14.5 2 -15 -2.5 C -9 -3 -4 1.5 0 7 Z"></path>
+      <path d="M 0 7 C 9 7 14.5 2 15 -2.5 C 9 -3 4 1.5 0 7 Z"></path>
+      <path d="M 0 7 C -7 4 -10 -3 -9 -8.5 C -5 -6.5 -2 -1.5 0 7 Z"></path>
+      <path d="M 0 7 C 7 4 10 -3 9 -8.5 C 5 -6.5 2 -1.5 0 7 Z"></path>
+      <path class="hilo__lotus-core" d="M 0 7 C -4.2 1 -4 -7 0 -12.5 C 4 -7 4.2 1 0 7 Z"></path>
+    </svg>
+  </span>
 </div>
 
 <style>
@@ -31,7 +44,7 @@
     position: absolute;
     inset: 0;
     background: var(--sand);
-    box-shadow: 0 0 10px rgba(241, 209, 152, 0.55);
+    box-shadow: 0 0 10px rgba(241, 209, 152, 0.5);
     transform-origin: top;
   }
   @media (prefers-reduced-motion: no-preference) {
@@ -40,7 +53,8 @@
       will-change: transform;
     }
   }
-  /* Cabeza: queda a media pantalla mientras el hilo recorre la página. */
+
+  /* Cabeza: un loto pequeño que queda a media pantalla mientras el hilo recorre la página. */
   .hilo__head {
     position: sticky;
     top: 50vh;
@@ -48,24 +62,50 @@
     display: block;
     height: 0;
   }
-  .hilo__head span {
+  .hilo__halo {
     position: absolute;
     left: 50%;
     top: 0;
-    width: 64px;
-    height: 64px;
+    width: 180px;
+    height: 180px;
     translate: -50% -50%;
     border-radius: 50%;
     background: radial-gradient(
       circle,
-      #fff3dc 0 3px,
-      rgba(241, 209, 152, 0.5) 4px,
-      rgba(241, 209, 152, 0.12) 40%,
+      rgba(241, 209, 152, 0.2) 0,
+      rgba(241, 209, 152, 0.07) 35%,
       transparent 70%
     );
   }
+  .hilo__lotus {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    max-width: none; /* el contenedor mide 1px (el hilo) */
+    translate: -50% -58%; /* la base del loto se posa sobre el hilo */
+    overflow: visible;
+  }
+  .hilo__lotus path {
+    fill: var(--ink);
+    stroke: var(--sand);
+    stroke-width: 1;
+    stroke-linejoin: round;
+  }
+  .hilo__lotus .hilo__lotus-core {
+    fill: rgba(241, 209, 152, 0.28);
+  }
   :global(html:not(.js)) .hilo__head {
     display: none;
+  }
+
+  /* Penumbra → luz: los bloques se encienden al paso del loto. */
+  :global(html.hilo-on [data-lumen]) {
+    transition: opacity 1.1s var(--ease-out);
+  }
+  :global(html.hilo-on [data-lumen]:not(.is-lit)) {
+    opacity: 0.32;
   }
 </style>
 
@@ -95,12 +135,50 @@
   }
   place();
 
+  /* ---- La luz del loto: un bloque se enciende en cuanto el loto (media pantalla) llega a su borde
+     superior, y queda encendido. Se comparan posiciones ya medidas con el scroll: nada de layout por
+     cuadro, y ningún bloque queda a oscuras aunque el scroll salte (anclas, menú). ---- */
+  const LUMEN = [
+    '.firma__head', '.cifras__cell', '.areas__head', '.anode', '.shot__visual', '.shot__text',
+    '.detalle__head', '.chap', '.ss__inner', '.equipo__head', '.miembro', '.testi__inner',
+  ].join(', ');
+  const motion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+  let pending: { el: HTMLElement; top: number }[] = [];
+  let measureLumen = () => {};
+  if (motion) {
+    const blocks = [...document.querySelectorAll<HTMLElement>(LUMEN)];
+    blocks.forEach((el) => (el.dataset.lumen = ''));
+    document.documentElement.classList.add('hilo-on');
+
+    measureLumen = () => {
+      pending = blocks
+        .filter((el) => !el.classList.contains('is-lit'))
+        .map((el) => ({ el, top: el.getBoundingClientRect().top + window.scrollY }))
+        .sort((a, b) => a.top - b.top);
+      light();
+    };
+    let raf = 0;
+    const light = () => {
+      raf = 0;
+      const line = window.scrollY + window.innerHeight * 0.55;
+      let i = 0;
+      while (i < pending.length && pending[i].top <= line) pending[i++].el.classList.add('is-lit');
+      if (i) pending = pending.slice(i);
+      if (!pending.length) window.removeEventListener('scroll', onScroll);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(light);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    measureLumen();
+  }
+
   // Se registra al final: así mide la página ya con todas las demás escenas montadas.
   scene(99, ({ gsap, ScrollTrigger, c }) => {
     place();
     if (c.reduce) return;
 
-    // Borde del relleno = cabeza, siempre a media pantalla.
+    // Borde del relleno = loto, siempre a media pantalla.
     gsap.fromTo(
       fill,
       { scaleY: 0 },
@@ -116,6 +194,9 @@
       },
     );
 
+    // Las posiciones de los bloques cambian con cada refresh (fuentes, imágenes, resize).
+    ScrollTrigger.addEventListener('refresh', measureLumen);
+
     // Si cambia el alto de la página (imágenes, fuentes, paneles), se vuelve a medir.
     let t = 0;
     const ro = new ResizeObserver(() => {
@@ -123,6 +204,9 @@
       t = window.setTimeout(() => ScrollTrigger.refresh(), 200);
     });
     ro.observe(document.body);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      ScrollTrigger.removeEventListener('refresh', measureLumen);
+    };
   });
 </script>
