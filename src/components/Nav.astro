@@ -237,7 +237,9 @@ import { contacto, nav } from '../data/site';
       onUpdate: (self) => {
         if (!menu.hidden) return;
         // Se oculta al bajar y reaparece al subir.
-        show(self.direction === 1 && self.scroll() > 240 ? -100 : 0);
+        const hide = self.direction === 1 && self.scroll() > 240;
+        show(hide ? -100 : 0);
+        document.documentElement.classList.toggle('nav-hidden', hide);
       },
       onToggle: (self) => header.classList.toggle('is-scrolled', self.isActive),
     });

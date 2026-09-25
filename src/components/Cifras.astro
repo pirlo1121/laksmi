@@ -31,7 +31,7 @@ import { cifras } from '../data/site';
   .cifras {
     position: relative;
     padding-block: clamp(4rem, 10vh, 7rem);
-    min-height: 60vh;
+    min-height: 48vh;
     display: flex;
     align-items: center;
   }
@@ -79,7 +79,7 @@ import { cifras } from '../data/site';
   .cifras__num {
     font-family: var(--font-display);
     font-weight: 900;
-    font-size: 9vw;
+    font-size: clamp(3rem, 6vw, 6.25rem);
     line-height: 0.85;
     letter-spacing: -0.04em;
     color: var(--text);
@@ -88,7 +88,7 @@ import { cifras } from '../data/site';
   }
   .cifras__num.is-accent {
     color: var(--sand);
-    font-size: 5.4vw; /* GRATIS es una palabra larga: mantiene la línea base de la fila */
+    font-size: clamp(1.8rem, 3.6vw, 3.75rem); /* GRATIS es una palabra larga: mantiene la línea base de la fila */
     line-height: 1.2;
   }
   /* Odómetro: cada dígito es una columna 0–9 que gira hasta su valor. */
@@ -124,15 +124,18 @@ import { cifras } from '../data/site';
   }
 
   @media (max-width: 767px) {
+    .cifras {
+      min-height: 0;
+    }
     .cifras__grid {
       grid-template-columns: repeat(2, 1fr);
       row-gap: 1rem;
     }
     .cifras__num {
-      font-size: 16vw;
+      font-size: 12vw;
     }
     .cifras__num.is-accent {
-      font-size: 11vw;
+      font-size: 8.2vw;
     }
     .cifras__cell:nth-child(2)::after {
       content: '';

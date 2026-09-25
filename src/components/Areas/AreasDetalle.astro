@@ -1,0 +1,566 @@
+---
+/**
+ * Áreas · parte 2: el detalle de cada área.
+ * Desktop: índice fijo a la izquierda (con barra de lectura del área activa) y las cuatro áreas
+ * a la derecha con scroll nativo. Móvil: el índice se vuelve una barra de chips fija arriba.
+ * Todo el contenido está siempre en el DOM (sin paneles ocultos): rápido, accesible y bueno para SEO.
+ */
+import { areas } from '../../data/areas';
+import { glosario } from '../../data/paquetes';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<section class="detalle" aria-labelledby="detalle-title" data-detalle>
+  <div class="container detalle__grid">
+    <aside class="detalle__aside">
+      <div class="detalle__sticky">
+        <div class="detalle__intro">
+          <p class="eyebrow">Las áreas en detalle</p>
+          <h2 class="display detalle__title" id="detalle-title">
+            <span class="mask"><span class="line">Cómo le</span></span>
+            <span class="mask"><span class="light">acompañamos</span></span>
+          </h2>
+        </div>
+
+        <nav class="detalle__nav" aria-label="Áreas de práctica">
+          <ol role="list" data-detalle-chips>
+            {
+              areas.map((a) => (
+                <li>
+                  <a class="dnav" href={`#${a.id}`} data-detalle-link>
+                    <span class="dnav__num">{a.numero}</span>
+                    <span class="dnav__name">{a.nombre}</span>
+                    <span class="dnav__bar" aria-hidden="true">
+                      <span />
+                    </span>
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </nav>
+
+        <a class="btn btn--primary detalle__cta" href="#contacto">
+          Primera consulta gratis <span class="arrow">→</span>
+        </a>
+      </div>
+    </aside>
+
+    <div class="detalle__body">
+      {
+        areas.map((a) => (
+          <article class="dt" id={a.id} aria-labelledby={`dt-${a.id}`} data-detalle-area data-gate={a.gate}>
+            <header class="dt__head">
+              <span class="dt__num" aria-hidden="true">
+                {a.numero}
+              </span>
+              <h3 class="display dt__title" id={`dt-${a.id}`}>
+                <span class="mask">
+                  <span class="line">{a.titulo[0]}</span>
+                </span>
+                <span class="mask">
+                  <span class="light">{a.titulo[1]}</span>
+                </span>
+              </h3>
+              <p class="dt__summary" data-dt-item>
+                {a.resumen}
+              </p>
+            </header>
+
+            {a.destacada ? (
+              <div class="dt__ss">
+                <ul class="dt__siglas" role="list">
+                  {glosario.map((g) => (
+                    <li class="dt__sigla" data-dt-item>
+                      <strong>{g.sigla}</strong>
+                      <span>{g.significado}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p class="dt__note" data-dt-item>
+                  Para independientes y empresas: afiliación, aportes y novedades en un solo lugar, en paquetes
+                  claros y con un precio desde el primer contacto.
+                </p>
+              </div>
+            ) : (
+              <div class="dt__groups">
+                {a.grupos.map((g) => (
+                  <div class="dt__group">
+                    <h4 class="dt__group-title" data-dt-item>
+                      {g.titulo}
+                      <span>{pad(g.servicios.length)}</span>
+                    </h4>
+                    <ol class="dt__list" role="list">
+                      {g.servicios.map((s, i) => (
+                        <li data-dt-item>
+                          <span class="dt__i" aria-hidden="true">
+                            {pad(i + 1)}
+                          </span>
+                          <span>{s}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div class="dt__foot" data-dt-item>
+              {a.destacada ? (
+                <a class="btn btn--outline" href="#paquetes">
+                  Ver paquetes <span class="arrow">→</span>
+                </a>
+              ) : (
+                <a class="btn btn--outline" href="#contacto" data-area={a.id}>
+                  Consultar esta área <span class="arrow">→</span>
+                </a>
+              )}
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .detalle {
+    position: relative;
+    padding-block: clamp(2rem, 4vw, 3rem) clamp(4rem, 10vw, 8rem);
+  }
+  .detalle__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr);
+    gap: clamp(2rem, 6vw, 7rem);
+    align-items: start;
+  }
+
+  /* ---- Índice fijo ---- */
+  .detalle__aside {
+    height: 100%;
+  }
+  .detalle__sticky {
+    position: sticky;
+    top: calc(var(--nav-h) + 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2rem, 4vh, 3rem);
+    padding-top: clamp(2.5rem, 5vw, 4.5rem);
+  }
+  .detalle__intro .eyebrow {
+    margin-bottom: 1rem;
+  }
+  .detalle__title {
+    font-size: clamp(2.5rem, 4.6vw, 4.75rem);
+  }
+  .detalle__nav ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+  .dnav {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    align-items: baseline;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    color: var(--text-dim);
+    transition: color 0.4s var(--ease-out);
+  }
+  .dnav__num {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+  .dnav__name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1rem, 1.3vw, 1.2rem);
+    transition: transform 0.5s var(--ease-out);
+  }
+  /* Barra de lectura: se llena mientras se recorre el área. */
+  .dnav__bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .dnav__bar span {
+    position: absolute;
+    inset: 0;
+    background: var(--sand);
+    transform: scaleX(var(--p, 0));
+    transform-origin: left;
+  }
+  .dnav:hover {
+    color: var(--text);
+  }
+  .dnav.is-active {
+    color: var(--text);
+  }
+  .dnav.is-active .dnav__num {
+    color: var(--sand);
+  }
+  .dnav.is-active .dnav__name {
+    transform: translateX(8px);
+  }
+  .dnav.is-done .dnav__bar span {
+    opacity: 0.35;
+  }
+  .detalle__cta {
+    align-self: flex-start;
+  }
+
+  /* ---- Contenido ---- */
+  .dt {
+    position: relative;
+    padding-block: clamp(2.5rem, 5vw, 4.5rem);
+    border-top: 1px solid var(--line);
+  }
+  .dt:first-child {
+    border-top: 0;
+  }
+  .dt__head {
+    position: relative;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+  .dt__num {
+    position: absolute;
+    top: -0.1em;
+    right: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(4rem, 9vw, 8.5rem);
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(241, 209, 152, 0.28);
+    pointer-events: none;
+    user-select: none;
+  }
+  .dt__title {
+    position: relative;
+    font-size: clamp(2.5rem, 5vw, 5.25rem);
+    margin-bottom: 1.5rem;
+  }
+  .dt__summary {
+    max-width: 52ch;
+    margin: 0;
+    font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .dt__groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.5rem clamp(2rem, 4vw, 3.5rem);
+  }
+  .dt__group-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 0 0 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--sand);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--sand);
+  }
+  .dt__group-title span {
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .dt__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .dt__list li {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    gap: 0.5rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text);
+    transition:
+      color 0.3s var(--ease-out),
+      padding-left 0.4s var(--ease-out);
+  }
+  .dt__i {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    padding-top: 0.2em;
+    transition: color 0.3s var(--ease-out);
+  }
+  @media (hover: hover) {
+    .dt__list li:hover {
+      padding-left: 6px;
+    }
+    .dt__list li:hover .dt__i {
+      color: var(--sand);
+    }
+  }
+
+  .dt__siglas {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .dt__sigla {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.25rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.015);
+  }
+  .dt__sigla strong {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--sand);
+  }
+  .dt__sigla span {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .dt__note {
+    max-width: 56ch;
+    margin: 0;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .dt__foot {
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* ---- Tablet ---- */
+  @media (max-width: 1100px) {
+    .dt__groups {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---- Móvil / tablet vertical: el índice se vuelve una barra de chips fija ---- */
+  @media (max-width: 899px) {
+    .detalle__grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+    /* Sin caja propia: así la barra queda fija durante toda la sección, no solo dentro del aside. */
+    .detalle__aside,
+    .detalle__sticky {
+      display: contents;
+    }
+    .detalle__intro {
+      padding-top: clamp(2rem, 6vw, 3rem);
+      margin-bottom: 1.5rem;
+    }
+    .detalle__cta {
+      display: none;
+    }
+    .detalle__nav {
+      position: sticky;
+      top: var(--nav-h);
+      z-index: 5;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 10px var(--gutter);
+      background: rgba(10, 14, 21, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      transition: top 0.5s var(--ease-out);
+    }
+    :global(html.nav-hidden) .detalle__nav {
+      top: 0;
+    }
+    .detalle__nav ol {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border: 0;
+      scroll-padding-inline: var(--gutter);
+    }
+    .detalle__nav ol::-webkit-scrollbar {
+      display: none;
+    }
+    .dnav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--pill);
+      white-space: nowrap;
+      overflow: hidden;
+      transition:
+        color 0.3s var(--ease-out),
+        border-color 0.3s var(--ease-out),
+        background-color 0.3s var(--ease-out);
+    }
+    .dnav__num {
+      font-size: 11px;
+    }
+    .dnav__name {
+      font-size: 14px;
+    }
+    .dnav.is-active {
+      border-color: var(--sand);
+      background: rgba(241, 209, 152, 0.08);
+    }
+    .dnav.is-active .dnav__name {
+      transform: none;
+    }
+    .dnav__bar {
+      left: 14px;
+      right: 14px;
+      bottom: 4px;
+    }
+    .dnav.is-done .dnav__bar span {
+      opacity: 0;
+    }
+    .dt {
+      scroll-margin-top: calc(var(--nav-h) + 70px);
+    }
+    .dt:first-child {
+      border-top: 0;
+    }
+    .dt__num {
+      font-size: 4.5rem;
+    }
+  }
+
+  @media (max-width: 559px) {
+    /* Sin espacio al lado del título: el número va encima, en el flujo. */
+    .dt__num {
+      position: static;
+      display: block;
+      margin-bottom: 0.75rem;
+      font-size: 3.25rem;
+    }
+    .dt__siglas {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .dt__title {
+      font-size: clamp(2.4rem, 12vw, 3.25rem);
+    }
+    .dt__list li {
+      font-size: 15px;
+    }
+  }
+</style>
+
+<script>
+  import { registerAnchor, scene } from '../../animations/setup';
+  import { EASE } from '../../animations/constants';
+
+  const root = document.querySelector<HTMLElement>('[data-detalle]')!;
+  const items = [...root.querySelectorAll<HTMLElement>('[data-detalle-area]')];
+  const links = [...root.querySelectorAll<HTMLAnchorElement>('[data-detalle-link]')];
+  const chips = root.querySelector<HTMLElement>('[data-detalle-chips]')!;
+  const stacked = window.matchMedia('(max-width: 899px)');
+
+  /* ---- Índice: área activa + barra de lectura (un solo listener de scroll, con rAF) ---- */
+  let active = -1;
+  let raf = 0;
+  const visited = new Set<string>();
+
+  function update() {
+    raf = 0;
+    const line = window.innerHeight * 0.42;
+    let idx = -1;
+    items.forEach((el, i) => {
+      if (el.getBoundingClientRect().top <= line) idx = i;
+    });
+    items.forEach((el, i) => {
+      const r = el.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (line - r.top) / r.height));
+      links[i].style.setProperty('--p', i <= idx ? p.toFixed(3) : '0');
+      links[i].classList.toggle('is-done', i < idx);
+    });
+    if (idx === active) return;
+    if (active >= 0) {
+      links[active].classList.remove('is-active');
+      links[active].removeAttribute('aria-current');
+    }
+    active = idx;
+    if (idx < 0) return;
+    links[idx].classList.add('is-active');
+    links[idx].setAttribute('aria-current', 'true');
+
+    // Las puertas del yantra de progreso se encienden al recorrer cada área.
+    visited.add(items[idx].dataset.gate!);
+    window.dispatchEvent(new CustomEvent('laksmi:area', { detail: { gates: [...visited] } }));
+
+    // Móvil: el chip activo se desliza a la vista (solo en horizontal).
+    if (stacked.matches) {
+      const chip = links[idx].parentElement!;
+      chips.scrollTo({ left: chip.offsetLeft - chips.clientWidth / 2 + chip.clientWidth / 2, behavior: 'smooth' });
+    }
+  }
+
+  const request = () => {
+    if (!raf) raf = requestAnimationFrame(update);
+  };
+  window.addEventListener('scroll', request, { passive: true });
+  window.addEventListener('resize', request);
+  request();
+
+  // Anclas #laboral, #civil, #seguridad-social, #penal: dejan espacio para la barra de chips en móvil.
+  items.forEach((el) => {
+    registerAnchor(`#${el.id}`, () => {
+      const offset = stacked.matches ? 76 : 24;
+      return el.getBoundingClientRect().top + window.scrollY - offset;
+    });
+  });
+
+  /* ---- Entrada ---- */
+  scene(3.5, ({ gsap, c }) => {
+    if (c.reduce) return;
+    gsap.from(root.querySelectorAll('.detalle__title .line, .detalle__title .light'), {
+      yPercent: 110,
+      duration: 1.2,
+      ease: EASE.enter,
+      stagger: 0.1,
+      scrollTrigger: { trigger: root, start: 'top 78%', once: true },
+    });
+    gsap.from(root.querySelectorAll('.detalle__intro .eyebrow, .detalle__nav li, .detalle__cta'), {
+      autoAlpha: 0,
+      y: 16,
+      duration: 0.8,
+      ease: EASE.heavy,
+      stagger: 0.06,
+      scrollTrigger: { trigger: root, start: 'top 78%', once: true },
+    });
+
+    items.forEach((el) => {
+      const tl = gsap.timeline({ scrollTrigger: { trigger: el, start: 'top 80%', once: true } });
+      tl.from(el.querySelector('.dt__num'), { autoAlpha: 0, x: 30, duration: 1.2, ease: EASE.enter }, 0)
+        .from(el.querySelectorAll('.dt__title .line, .dt__title .light'), { yPercent: 110, duration: 1, ease: EASE.enter, stagger: 0.08 }, 0)
+        .from(el.querySelectorAll('[data-dt-item]'), { autoAlpha: 0, y: 18, duration: 0.7, ease: EASE.heavy, stagger: 0.025 }, 0.2);
+    });
+  });
+</script>

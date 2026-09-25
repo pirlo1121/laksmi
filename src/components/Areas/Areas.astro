@@ -1,13 +1,18 @@
 ---
+/**
+ * Áreas · parte 1: índice editorial.
+ * Cuatro filas grandes (número, nombre, resumen). Al pasar el cursor la fila se ilumina y las demás
+ * ceden; cada fila lleva a su detalle en AreasDetalle.
+ */
 import { areas } from '../../data/areas';
-import AreaDoor from './AreaDoor.astro';
+import { glosario } from '../../data/paquetes';
+import Yantra from '../Yantra.astro';
+
+const servicios = (a: (typeof areas)[number]) =>
+  a.destacada ? `${glosario.length} coberturas` : `${a.grupos.reduce((n, g) => n + g.servicios.length, 0)} servicios`;
 ---
 
 <section class="areas" id="areas" aria-labelledby="areas-title" data-areas>
-  <div class="grid-lines" aria-hidden="true">
-    {Array.from({ length: 12 }, () => <span />)}
-  </div>
-
   <div class="container">
     <header class="areas__head">
       <div>
@@ -16,270 +21,333 @@ import AreaDoor from './AreaDoor.astro';
           <span class="mask"><span class="line">Cuatro áreas</span></span>
         </h2>
       </div>
-      <p class="areas__hint" aria-hidden="true">Elija una puerta <span>→</span></p>
+      <p class="areas__intro" data-areas-fade>
+        Una sola firma para lo laboral, lo familiar, su seguridad social y su defensa penal. Elija un área y
+        vea en detalle cómo le acompañamos.
+      </p>
     </header>
 
-    <div class="doors" data-doors>
-      {areas.map((area, i) => <AreaDoor area={area} total={areas.length} open={i === 0} />)}
-    </div>
+    <ol class="areas__list" role="list" data-areas-list>
+      {
+        areas.map((a) => (
+          <li class="area-row" data-area-row>
+            <span class="area-row__rule" aria-hidden="true" />
+            <a class="area-row__link" href={`#${a.id}`}>
+              <span class="area-row__num">{a.numero}</span>
+              <span class="area-row__name display">
+                <span class="area-row__mask">
+                  <span class="line">{a.titulo[0]}</span>
+                </span>
+                <span class="area-row__mask">
+                  <span class="light">{a.titulo[1]}</span>
+                </span>
+              </span>
+              <span class="area-row__summary">{a.resumen}</span>
+              <span class="area-row__meta">
+                <span class="area-row__count">{servicios(a)}</span>
+                <span class="area-row__go" aria-hidden="true">
+                  <Yantra class="area-row__glyph" rotate={a.rotacion} lit={a.gate} />
+                  <span class="area-row__arrow">→</span>
+                </span>
+              </span>
+            </a>
+          </li>
+        ))
+      }
+      <li class="area-row area-row--end" aria-hidden="true">
+        <span class="area-row__rule" />
+      </li>
+    </ol>
   </div>
 </section>
 
 <style>
   .areas {
     position: relative;
-    padding-block: clamp(4rem, 10vw, 8rem);
-  }
-  .areas .grid-lines {
-    opacity: 0.5;
+    padding-block: clamp(4rem, 10vw, 8rem) clamp(3rem, 6vw, 5rem);
   }
   .areas__head {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 2rem;
-    margin-bottom: clamp(2rem, 4vw, 3.5rem);
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 36ch);
+    align-items: end;
+    gap: 2rem 4rem;
+    margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
   }
   .areas__head .eyebrow {
     margin-bottom: 1rem;
   }
   .areas__title {
-    font-size: clamp(3rem, 9vw, 9rem);
+    font-size: clamp(3rem, 8vw, 8rem);
   }
-  .areas__hint {
+  .areas__intro {
     margin: 0;
-    font-size: 13px;
-    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    font-size: clamp(1rem, 1.2vw, 1.125rem);
+    line-height: 1.6;
+  }
+
+  .areas__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .area-row {
+    position: relative;
+  }
+  .area-row__rule {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--line);
+    transform-origin: left;
+  }
+  .area-row--end {
+    height: 1px;
+  }
+
+  .area-row__link {
+    position: relative;
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1.25fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem clamp(1.5rem, 3vw, 3rem);
+    padding: clamp(1.5rem, 2.6vw, 2.25rem) clamp(0.75rem, 1.5vw, 1.5rem);
+    text-decoration: none;
+    color: var(--text);
+    isolation: isolate;
+    transition: opacity 0.5s var(--ease-out);
+  }
+  /* Fondo que se despliega desde la izquierda al pasar el cursor. */
+  .area-row__link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, rgba(241, 209, 152, 0.07), rgba(241, 209, 152, 0.015) 70%, transparent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.7s var(--ease-out);
+  }
+
+  .area-row__num {
+    align-self: start;
+    padding-top: 0.5em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    transition: color 0.4s var(--ease-out);
+  }
+  .area-row__name {
+    font-size: clamp(2.25rem, 4.2vw, 4.25rem);
+    line-height: 0.9;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .area-row__mask {
+    display: block;
+    overflow: hidden;
+    padding-block: 0.08em 0.06em;
+    margin-block: -0.08em -0.06em;
+  }
+  .area-row__name .line,
+  .area-row__name .light {
+    display: block;
+  }
+  .area-row__summary {
+    max-width: 44ch;
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.6;
+    transition: color 0.4s var(--ease-out);
+  }
+  .area-row__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+  }
+  .area-row__count {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--text-dim);
     white-space: nowrap;
   }
-  .areas__hint span {
-    display: inline-block;
-    color: var(--sand);
-    animation: nudge 2.4s var(--ease-out) infinite;
-  }
-  @keyframes nudge {
-    50% {
-      transform: translateX(6px);
-    }
-  }
-  .doors {
+  .area-row__go {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    transition:
+      border-color 0.4s var(--ease-out),
+      background-color 0.4s var(--ease-out);
   }
-  @media (min-width: 1024px) {
-    :global(html.js) .doors {
-      flex-direction: row;
-      gap: 12px;
-      height: clamp(600px, 82vh, 780px);
+  .area-row__go :global(.area-row__glyph) {
+    position: absolute;
+    inset: 9px;
+    width: auto;
+    height: auto;
+    color: var(--text-dim);
+    --gate-color: var(--text-dim);
+    --yantra-stroke: 0.8px;
+    --yantra-stroke-lit: 1.4px;
+    opacity: 1;
+    transition:
+      opacity 0.4s var(--ease-out),
+      transform 0.7s var(--ease-out);
+  }
+  .area-row__arrow {
+    font-size: 20px;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateX(-10px);
+    transition:
+      opacity 0.4s var(--ease-out),
+      transform 0.5s var(--ease-out);
+  }
+
+  /* ---- Hover / foco ---- */
+  .area-row__link:focus-visible {
+    outline-offset: -2px;
+  }
+  .area-row__link:is(:hover, :focus-visible)::before {
+    transform: scaleX(1);
+  }
+  .area-row__link:is(:hover, :focus-visible) .area-row__num {
+    color: var(--sand);
+  }
+  .area-row__link:is(:hover, :focus-visible) .area-row__name {
+    transform: translateX(10px);
+  }
+  .area-row__link:is(:hover, :focus-visible) .area-row__summary {
+    color: var(--text);
+  }
+  .area-row__link:is(:hover, :focus-visible) .area-row__go {
+    border-color: var(--sand);
+    background: var(--sand);
+  }
+  .area-row__link:is(:hover, :focus-visible) :global(.area-row__glyph) {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.6);
+  }
+  .area-row__link:is(:hover, :focus-visible) .area-row__arrow {
+    opacity: 1;
+    transform: none;
+  }
+  /* Las demás filas ceden protagonismo. */
+  @media (hover: hover) {
+    .areas__list:has(.area-row__link:hover) .area-row__link:not(:hover) {
+      opacity: 0.4;
     }
   }
+
+  /* ---- Tablet ---- */
   @media (max-width: 1023px) {
-    .areas__hint {
-      display: none;
+    .areas__head {
+      grid-template-columns: 1fr;
+    }
+    .area-row__link {
+      grid-template-columns: 3rem minmax(0, 1fr) auto;
+      grid-template-areas:
+        'num name meta'
+        '.   sum  meta';
+      align-items: start;
+    }
+    .area-row__num {
+      grid-area: num;
+    }
+    .area-row__name {
+      grid-area: name;
+    }
+    .area-row__summary {
+      grid-area: sum;
+    }
+    .area-row__meta {
+      grid-area: meta;
+      align-self: center;
     }
   }
+
+  /* ---- Móvil ---- */
   @media (max-width: 767px) {
     .areas__title {
       font-size: 14vw;
-      line-height: 0.95; /* deja ver la tilde de ÁREAS en la segunda línea */
+      line-height: 1.05; /* deja ver la tilde de ÁREAS en la segunda línea */
+    }
+    .area-row__link {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        'num  meta'
+        'name name'
+        'sum  sum';
+      gap: 0.75rem 1rem;
+      padding-inline: 0;
+    }
+    .area-row__num {
+      padding-top: 0;
+      align-self: center;
+    }
+    .area-row__name {
+      font-size: clamp(2.1rem, 11vw, 3rem);
+    }
+    .area-row__meta {
+      flex-direction: row-reverse;
+      align-items: center;
+    }
+    .area-row__go {
+      width: 44px;
+      height: 44px;
+    }
+    .area-row__go :global(.area-row__glyph) {
+      inset: 7px;
+    }
+    .area-row__link:is(:hover, :focus-visible) .area-row__name {
+      transform: none;
     }
   }
 </style>
 
 <script>
-  import { loadGsap, prefersReducedMotion, registerAnchor, scene, scrollByNow, scrollToY } from '../../animations/setup';
+  import { scene } from '../../animations/setup';
   import { DUR, EASE } from '../../animations/constants';
   import { revealLines } from '../../animations/reveal';
 
   const root = document.querySelector<HTMLElement>('[data-areas]')!;
-  const doors = [...root.querySelectorAll<HTMLElement>('[data-door]')];
-  const tabs = doors.map((d) => d.querySelector<HTMLButtonElement>('[data-door-tab]')!);
-  const panels = doors.map((d) => d.querySelector<HTMLElement>('[data-door-panel]')!);
-  const rowMQ = window.matchMedia('(min-width: 1024px)');
-  const isRow = () => rowMQ.matches;
 
-  let active = 0;
-  let busy = false;
-  const visited = new Set<string>();
-
-  /* ---- Puertas encendidas del yantra de progreso ---- */
-  function markVisited(i: number) {
-    if (i < 0) return;
-    visited.add(doors[i].dataset.gate!);
-    window.dispatchEvent(new CustomEvent('laksmi:area', { detail: { gates: [...visited] } }));
-  }
-
-  function setState(i: number, open: boolean) {
-    doors[i].classList.toggle('is-open', open);
-    tabs[i].setAttribute('aria-expanded', String(open));
-    panels[i].inert = !open;
-  }
-  doors.forEach((_, i) => setState(i, i === active));
-
-  /** Entrada escalonada del contenido de la puerta que se abre. */
-  async function revealContent(i: number, delay: number) {
-    if (prefersReducedMotion()) return;
-    const { gsap } = await loadGsap();
-    const items = doors[i].querySelectorAll('[data-door-item]');
-    gsap.fromTo(
-      items,
-      { autoAlpha: 0, x: isRow() ? 40 : 0, y: isRow() ? 0 : 24 },
-      { autoAlpha: 1, x: 0, y: 0, duration: 0.9, ease: EASE.enter, stagger: 0.06, delay, clearProps: 'all' },
-    );
-  }
-
-  /* ---- Desktop: una puerta siempre abierta; el ancho lo anima CSS (flex-grow) ---- */
-  function openRow(i: number) {
-    if (i === active) return;
-    if (active >= 0) setState(active, false);
-    setState(i, true);
-    active = i;
-    markVisited(i);
-    void revealContent(i, 0.3);
-  }
-
-  /* ---- Apilado (móvil/tablet): acordeón con altura animada ---- */
-  async function toggleStack(i: number) {
-    if (busy) return;
-    const reduce = prefersReducedMotion();
-    const closing = active;
-    const opening = i === active ? -1 : i;
-    busy = true;
-
-    const { gsap } = await loadGsap();
-    const dur = reduce ? 0 : 0.7;
-    // La pestaña tocada queda quieta bajo el dedo mientras la otra puerta se cierra:
-    // se compensa el scroll en cada cuadro (y se apaga el scroll anchoring del navegador).
-    const anchor = doors[i];
-    let anchorTop = anchor.getBoundingClientRect().top;
-    const html = document.documentElement;
-    html.style.overflowAnchor = 'none';
-    const tl = gsap.timeline({
-      defaults: { ease: 'power3.inOut' },
-      onUpdate: () => {
-        const top = anchor.getBoundingClientRect().top;
-        const dy = top - anchorTop;
-        if (Math.abs(dy) > 0.5) scrollByNow(dy);
-        anchorTop = anchor.getBoundingClientRect().top;
-      },
-    });
-
-    if (closing >= 0) {
-      tl.to(panels[closing], { height: 0, duration: dur }, 0).add(() => {
-        setState(closing, false);
-        gsap.set(panels[closing], { clearProps: 'height' });
-      });
-    }
-    if (opening >= 0) {
-      setState(opening, true);
-      tl.fromTo(panels[opening], { height: 0 }, { height: 'auto', duration: dur, clearProps: 'height' }, 0);
-      void revealContent(opening, reduce ? 0 : 0.2);
-    }
-    active = opening;
-    markVisited(opening);
-
-    await tl.then();
-    html.style.overflowAnchor = '';
-    busy = false;
-    // Si la puerta abierta quedó muy abajo, se acerca suavemente a la parte de arriba.
-    if (opening >= 0) {
-      const top = doors[opening].getBoundingClientRect().top;
-      if (top < 60 || top > window.innerHeight * 0.4) scrollToY(top + window.scrollY - 84);
-    }
-    const { ScrollTrigger } = await loadGsap();
-    ScrollTrigger.refresh();
-  }
-
-  tabs.forEach((tab, i) => {
-    tab.addEventListener('click', () => (isRow() ? openRow(i) : void toggleStack(i)));
-    // Flechas para moverse entre puertas.
-    tab.addEventListener('keydown', (e) => {
-      const keys: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
-      if (!(e.key in keys)) return;
-      e.preventDefault();
-      const next = (i + keys[e.key] + tabs.length) % tabs.length;
-      tabs[next].focus();
-      if (isRow()) openRow(next);
-    });
-  });
-
-  // En desktop, abrir al pasar el mouse un momento (sin tener que hacer clic).
-  let hoverTimer = 0;
-  doors.forEach((door, i) => {
-    door.addEventListener('pointerenter', (e) => {
-      if (!isRow() || e.pointerType !== 'mouse') return;
-      hoverTimer = window.setTimeout(() => openRow(i), 380);
-    });
-    door.addEventListener('pointerleave', () => clearTimeout(hoverTimer));
-  });
-
-  // Al cruzar el breakpoint: sin alturas en línea y, en fila, siempre una puerta abierta.
-  rowMQ.addEventListener('change', () => {
-    panels.forEach((p) => (p.style.height = ''));
-    if (isRow() && active < 0) {
-      active = 0;
-      setState(0, true);
-    }
-  });
-
-  // Anclas #laboral, #civil, #seguridad-social, #penal: abren su puerta.
-  doors.forEach((door, i) => {
-    registerAnchor(`#${door.id}`, () => {
-      if (isRow()) openRow(i);
-      else if (active !== i) void toggleStack(i);
-      const target = isRow() ? root : door;
-      return target.getBoundingClientRect().top + window.scrollY - 60;
-    });
-  });
-
-  // La primera puerta cuenta como visitada cuando la sección aparece.
-  new IntersectionObserver(
-    ([entry], obs) => {
-      if (!entry.isIntersecting) return;
-      markVisited(Math.max(active, 0));
-      obs.disconnect();
-    },
-    { threshold: 0.3 },
-  ).observe(root);
-
-  /* ---- Entrada: las puertas suben desde su máscara, una tras otra ---- */
+  /* ---- Entrada: las líneas se trazan y cada fila sube desde su máscara ---- */
   scene(3, ({ gsap, c }) => {
     if (c.reduce) return;
     revealLines(gsap, root.querySelector('.areas__title')!, root, 'top 75%');
-    gsap.from(root.querySelectorAll('.areas__head .eyebrow, .areas__hint'), {
+    gsap.from(root.querySelectorAll('.areas__head .eyebrow, [data-areas-fade]'), {
       autoAlpha: 0,
       y: 16,
       duration: DUR.base,
       ease: EASE.heavy,
+      stagger: 0.1,
       scrollTrigger: { trigger: root, start: 'top 75%', once: true },
     });
-    gsap.fromTo(
-      doors,
-      { clipPath: 'inset(100% 0% 0% 0%)', y: 80 },
-      {
-        clipPath: 'inset(0% 0% 0% 0%)',
-        y: 0,
-        duration: 1.3,
-        ease: EASE.enter,
-        stagger: 0.12,
-        clearProps: 'clipPath,transform',
-        scrollTrigger: { trigger: root.querySelector('[data-doors]'), start: 'top 85%', once: true },
-      },
-    );
-    const first = doors[Math.max(active, 0)].querySelectorAll('[data-door-item]');
-    gsap.from(first, {
-      autoAlpha: 0,
-      y: 30,
-      duration: 1,
-      ease: EASE.enter,
-      stagger: 0.06,
-      delay: 0.5,
-      scrollTrigger: { trigger: root.querySelector('[data-doors]'), start: 'top 85%', once: true },
+
+    const rows = [...root.querySelectorAll<HTMLElement>('.area-row')];
+    rows.forEach((row) => {
+      const tl = gsap.timeline({ scrollTrigger: { trigger: row, start: 'top 88%', once: true } });
+      tl.from(row.querySelector('.area-row__rule'), { scaleX: 0, duration: 1.1, ease: EASE.enter }, 0);
+      const name = row.querySelectorAll('.area-row__name .line, .area-row__name .light');
+      if (!name.length) return;
+      tl.from(name, { yPercent: 110, duration: 1, ease: EASE.enter, stagger: 0.08 }, 0.1)
+        .from(row.querySelectorAll('.area-row__num, .area-row__summary, .area-row__meta'), {
+          autoAlpha: 0,
+          y: 18,
+          duration: 0.8,
+          ease: EASE.heavy,
+          stagger: 0.06,
+        }, 0.2);
     });
   });
 </script>
