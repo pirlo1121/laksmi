@@ -1,16 +1,11 @@
 ---
 /**
- * Historia: el hilo dorado, en vertical y en planos como una película.
- *
- * Rendimiento primero:
- *  - El hilo es UNA línea HTML en el centro; se llena con scaleY (solo compositor) y su cabeza es
- *    `position: sticky` a media pantalla (cero JS por cuadro).
- *  - Cada escena es un plano de pantalla completa con un SVG pequeño que se anima una vez al llegar
- *    (tiempo, no scrub). Solo la apertura del loto va atada al scroll, con sticky de CSS (sin pin de JS).
- *  - Sin filtros SVG, blend modes ni backdrop-filter.
- * Sin JS o con reduced-motion todo se ve estático y completo.
+ * Historia: escenas 2–7 del storyboard como planos del hilo de la página (ver Hilo.astro).
+ * Cada plano es de pantalla completa con un SVG pequeño que se anima una vez al llegar y se rebobina
+ * al volver; solo la apertura del loto va atada al scroll (sticky de CSS, sin pin de JS).
+ * Estilos compartidos en styles/film.css. Sin JS o con reduced-motion todo se ve completo.
  */
-import Yantra from './Yantra.astro';
+import '../styles/film.css';
 
 const f = (n: number) => Math.round(n * 10) / 10;
 type P = [number, number];
@@ -111,9 +106,6 @@ const planos = Array.from({ length: 8 }, (_, i) => {
 });
 const conectores = ['M 0 0 C -40 0 -70 20 -100 20', 'M 0 0 C 40 0 80 0 110 0', 'M 0 0 C 0 60 0 110 0 150'];
 
-/* Escena 8: todo el recorrido en miniatura. */
-const recorrido = ['Origen', 'Camino', 'Claridad', 'Loto', 'Centro', 'Construcción'];
-
 const escenas = [
   { n: '01', t: 'El origen' },
   { n: '02', t: 'El camino' },
@@ -130,27 +122,6 @@ const escenas = [
 <section class="film" id="historia" aria-labelledby="film-title" data-film>
   <h2 class="sr-only" id="film-title">Nuestra historia</h2>
 
-  <!-- El hilo: una línea que se llena con el scroll y una cabeza fija a media pantalla. -->
-  <div class="film__thread" aria-hidden="true" data-film-thread>
-    <span class="film__fill" data-film-fill></span>
-    <span class="film__head"><span></span></span>
-  </div>
-
-  <!-- 01 · El origen -->
-  <article class="shot" data-shot="origen">
-    <div class="shot__visual shot__visual--small" aria-hidden="true" data-anchor="start">
-      <svg viewBox="-200 -200 400 400">
-        <circle class="v-faint v-draw" r="60"></circle>
-        <circle class="v-faint v-draw" r="120"></circle>
-      </svg>
-      <span class="shot__spark" data-spark></span>
-    </div>
-    <div class="shot__text">
-      <p class="shot__label"><span>{escenas[0].n}</span> {escenas[0].t}</p>
-      <p class="shot__cap">Cada historia comienza con una decisión.</p>
-    </div>
-  </article>
-
   <!-- 02 · El camino -->
   <article class="shot shot--right" data-shot="camino">
     <div class="shot__visual" aria-hidden="true">
@@ -159,7 +130,7 @@ const escenas = [
       </svg>
     </div>
     <div class="shot__text">
-      <p class="shot__label"><span>{escenas[1].n}</span> {escenas[1].t}</p>
+      <p class="shot__label"><span>—</span>{escenas[1].t}</p>
       <p class="shot__cap">Incluso en los escenarios más complejos existe un camino.</p>
     </div>
   </article>
@@ -197,7 +168,7 @@ const escenas = [
       </svg>
     </div>
     <div class="shot__text">
-      <p class="shot__label"><span>{escenas[2].n}</span> {escenas[2].t}</p>
+      <p class="shot__label"><span>—</span>{escenas[2].t}</p>
       <p class="shot__cap">Transformamos la complejidad en claridad.</p>
       <ul class="sr-only">{conceptos.map((c) => <li>{c.t}</li>)}</ul>
     </div>
@@ -211,7 +182,7 @@ const escenas = [
       </svg>
     </div>
     <div class="shot__text">
-      <p class="shot__label"><span>{escenas[3].n}</span> {escenas[3].t}</p>
+      <p class="shot__label"><span>—</span>{escenas[3].t}</p>
       <p class="shot__cap">La solidez nace de una visión clara.</p>
     </div>
   </article>
@@ -246,7 +217,7 @@ const escenas = [
         </svg>
       </div>
       <div class="shot__text">
-        <p class="shot__label"><span>{escenas[4].n}</span> {escenas[4].t}</p>
+        <p class="shot__label"><span>—</span>{escenas[4].t}</p>
         <ul class="sr-only" role="list">
           {valores.map((v) => <li>{v.t}</li>)}
         </ul>
@@ -269,7 +240,7 @@ const escenas = [
       <span class="shot__light" data-light></span>
     </div>
     <div class="shot__text">
-      <p class="shot__label"><span>{escenas[5].n}</span> {escenas[5].t}</p>
+      <p class="shot__label"><span>—</span>{escenas[5].t}</p>
       <p class="shot__cap">Protegemos aquello que tiene valor.</p>
     </div>
   </article>
@@ -292,485 +263,38 @@ const escenas = [
       </svg>
     </div>
     <div class="shot__text">
-      <p class="shot__label"><span>{escenas[6].n}</span> {escenas[6].t}</p>
+      <p class="shot__label"><span>—</span>{escenas[6].t}</p>
       <p class="shot__cap">Soluciones legales diseñadas para crecer con usted.</p>
     </div>
   </article>
 
-  <!-- 08 · Legado: todo el recorrido, conectado por el mismo hilo -->
-  <article class="shot shot--right" data-shot="legado">
-    <div class="shot__visual" aria-hidden="true">
-      <svg viewBox="-200 -200 400 400">
-        <path class="v-thread v-draw" d="M 0 -170 V 170" data-map-line></path>
-        {
-          recorrido.map((r, i) => {
-            const y = -170 + i * 68;
-            return (
-              <g data-map-stop>
-                <circle class="v-stop" cy={y} r="6" />
-                <text class="v-map" x={i % 2 ? 20 : -20} y={y + 5} text-anchor={i % 2 ? 'start' : 'end'}>
-                  {r}
-                </text>
-              </g>
-            );
-          })
-        }
-      </svg>
-    </div>
-    <div class="shot__text">
-      <p class="shot__label"><span>{escenas[7].n}</span> {escenas[7].t}</p>
-      <p class="shot__cap">
-        <span class="shot__line">Más que resolver conflictos.</span>
-        <span class="shot__line shot__line--sand">Construimos futuro.</span>
-      </p>
-    </div>
-  </article>
-
-  <!-- 09 · Cierre: el loto se vuelve el logo -->
-  <article class="shot shot--end" data-shot="cierre">
-    <div class="shot__visual shot__visual--logo" aria-hidden="true" data-anchor="end">
-      <Yantra class="film__yantra" />
-    </div>
-    <div class="shot__text">
-      <p class="shot__label"><span>{escenas[8].n}</span> {escenas[8].t}</p>
-      <p class="film__brand" aria-label="LAKSMI Abogados">
-        <span aria-hidden="true">LAKSMI</span>
-        <span class="film__brand-sub" aria-hidden="true">Abogados</span>
-      </p>
-      <p class="film__cta-text">Agende una consulta</p>
-      <a class="btn btn--primary" href="#contacto">Contactar un abogado <span class="arrow">→</span></a>
-    </div>
-  </article>
 </section>
 
 <style>
   .film {
     position: relative;
-    background: var(--ink);
-    padding-bottom: clamp(3rem, 8vh, 6rem);
-  }
-
-  /* ---------- El hilo ---------- */
-  .film__thread {
-    position: absolute;
-    left: 50%;
-    width: 1px;
-    margin-left: -0.5px;
-    top: 0;
-    height: 0; /* el JS lo ajusta: del centro del primer dibujo al centro del logo */
-    background: rgba(241, 209, 152, 0.12);
-    z-index: 0;
-    pointer-events: none;
-  }
-  .film__fill {
-    position: absolute;
-    inset: 0;
-    background: var(--sand);
-    box-shadow: 0 0 10px rgba(241, 209, 152, 0.55);
-    transform-origin: top;
-  }
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html.js) .film__fill {
-      transform: scaleY(0);
-      will-change: transform;
-    }
-  }
-  /* Cabeza: queda a media pantalla mientras el hilo recorre la sección (sticky, sin JS). */
-  .film__head {
-    position: sticky;
-    top: 50vh;
-    top: 50dvh;
-    display: block;
-    height: 0;
-  }
-  .film__head span {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 64px;
-    height: 64px;
-    translate: -50% -50%;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      #fff3dc 0 3px,
-      rgba(241, 209, 152, 0.5) 4px,
-      rgba(241, 209, 152, 0.12) 40%,
-      transparent 70%
-    );
-  }
-  :global(html:not(.js)) .film__head {
-    display: none;
-  }
-
-  /* ---------- Planos ---------- */
-  .shot {
-    position: relative;
-    z-index: 1;
-    min-height: 100vh;
-    min-height: 100svh;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) min(460px, 38vw) minmax(0, 1fr);
-    grid-template-areas: 'text visual .';
-    align-items: center;
-    column-gap: clamp(1.5rem, 4vw, 4rem);
-    padding: 12vh var(--gutter);
-  }
-  .shot--right {
-    grid-template-areas: '. visual text';
-  }
-  .shot__visual {
-    grid-area: visual;
-    position: relative;
-    aspect-ratio: 1;
-    width: 100%;
-  }
-  .shot__visual svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-  .shot__visual--small {
-    width: 70%;
-    justify-self: center;
-  }
-  .shot__text {
-    grid-area: text;
-    max-width: 30ch;
-  }
-  .shot:not(.shot--right) .shot__text,
-  .shot--stay .shot__text {
-    justify-self: end;
-    text-align: right;
-  }
-  .shot__label {
-    margin: 0 0 1rem;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.28em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .shot__label span {
-    color: var(--sand);
-    margin-right: 0.5em;
-  }
-  .shot__cap {
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: clamp(1.6rem, 2.8vw, 2.9rem);
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-  .shot__line {
-    display: block;
-  }
-  .shot__line--sand {
-    color: var(--sand);
-  }
-
-  /* Apertura: el plano se queda quieto mientras se abren los pétalos. */
-  .shot--stay {
-    display: block;
-    min-height: 0;
-    height: 240vh;
-    padding: 0;
-  }
-  .shot__sticky {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    height: 100svh;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) min(460px, 38vw) minmax(0, 1fr);
-    grid-template-areas: 'text visual .';
-    align-items: center;
-    column-gap: clamp(1.5rem, 4vw, 4rem);
-    padding: 0 var(--gutter);
-  }
-
-  /* ---------- Dibujos: trazos finos, sin filtros ---------- */
-  .shot__visual :global(svg *) {
-    fill: none;
-  }
-  .v-faint {
-    stroke: rgba(241, 209, 152, 0.18);
-    stroke-width: 1.2;
-  }
-  .v-chaos {
-    stroke: rgba(217, 217, 217, 0.4);
-    stroke-width: 1.2;
-    stroke-linejoin: round;
-  }
-  .v-frag {
-    stroke: rgba(241, 209, 152, 0.45);
-    stroke-width: 1.3;
-    stroke-linecap: round;
-  }
-  .v-node,
-  .v-core,
-  .v-stop {
-    fill: var(--sand) !important;
-  }
-  .v-concept,
-  .v-map {
-    fill: var(--text) !important;
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-  }
-  .v-map {
-    fill: var(--text-dim) !important;
-    font-size: 12px;
-  }
-  .v-thread {
-    stroke: var(--sand);
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .v-rosa-faint {
-    stroke: rgba(241, 209, 152, 0.25);
-  }
-  .v-petal {
-    stroke: var(--sand);
-    stroke-width: 1.6;
-    fill: rgba(241, 209, 152, 0.05) !important;
-  }
-  .v-petal--in {
-    stroke: rgba(241, 209, 152, 0.55);
-  }
-  .v-petal--dim {
-    stroke: rgba(241, 209, 152, 0.35);
-  }
-  .v-value {
-    stroke: var(--ink);
-    stroke-width: 8px;
-    paint-order: stroke;
-    fill: var(--sand) !important;
-    font-family: var(--font-display);
-    font-weight: 300;
-    font-style: italic;
-    font-size: 28px;
-  }
-  .v-plan .v-draw {
-    stroke: rgba(91, 124, 168, 0.4);
-    stroke-width: 1.4;
-  }
-  .v-line {
-    stroke: rgba(217, 217, 217, 0.6);
-    stroke-width: 1.5;
-  }
-  .v-line--dim {
-    stroke: rgba(217, 217, 217, 0.25);
-  }
-  .v-link {
-    stroke: var(--sand);
-    stroke-width: 1.9;
-  }
-
-  .shot__spark {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 90px;
-    height: 90px;
-    translate: -50% -50%;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      #fff3dc 0 4px,
-      rgba(241, 209, 152, 0.45) 5px,
-      rgba(241, 209, 152, 0.1) 40%,
-      transparent 70%
-    );
-    animation: spark 3.2s ease-in-out infinite;
-  }
-  @keyframes spark {
-    50% {
-      transform: translateY(-8px) scale(1.08);
-    }
-  }
-  .shot__light {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 60%;
-    aspect-ratio: 1;
-    translate: -50% -50%;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      #fff6e4 0,
-      rgba(241, 209, 152, 0.7) 18%,
-      rgba(241, 209, 152, 0.18) 45%,
-      transparent 70%
-    );
-    pointer-events: none;
-  }
-
-  /* ---------- Cierre ---------- */
-  .shot__visual--logo :global(.film__yantra) {
-    width: 100%;
-    height: 100%;
-    color: var(--sand);
-    background: var(--ink); /* el hilo termina detrás del logo */
-    --yantra-stroke: 1.3px;
-  }
-  .film__brand {
-    display: grid;
-    margin: 0;
-    font-family: var(--font-display);
-    font-weight: 900;
-    font-size: clamp(3rem, 6.5vw, 6.5rem);
-    line-height: 0.9;
-    letter-spacing: -0.03em;
-    color: var(--text);
-  }
-  .film__brand-sub {
-    font-weight: 300;
-    font-style: italic;
-    font-size: 0.5em;
-    letter-spacing: -0.01em;
-    color: var(--sand);
-  }
-  .film__cta-text {
-    margin: 1.5rem 0 1rem;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .shot.shot--end .shot__text {
-    max-width: none;
-  }
-  .shot--end .btn {
-    white-space: nowrap;
-  }
-
-  /* ---------- Móvil / tablet vertical: dibujo arriba, texto abajo como tarjeta de título ---------- */
-  @media (max-width: 899px) {
-    .shot,
-    .shot--right,
-    .shot__sticky {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: 'visual' 'text';
-      align-content: center;
-      row-gap: 2rem;
-    }
-    .shot__visual {
-      width: min(78vw, 420px);
-      justify-self: center;
-    }
-    .shot__visual--small {
-      width: min(50vw, 260px);
-    }
-    .shot__visual--wide {
-      width: min(92vw, 460px);
-    }
-    .shot__text,
-    .shot:not(.shot--right) .shot__text,
-    .shot--stay .shot__text {
-      justify-self: center;
-      text-align: center;
-      max-width: 22ch;
-      /* El hilo pasa por detrás del texto. */
-      padding: 1rem 1.25rem;
-      background: var(--ink);
-    }
-    .shot__cap {
-      font-size: clamp(1.45rem, 6.4vw, 2rem);
-    }
-    .shot.shot--end .shot__text {
-      max-width: none;
-      width: 100%;
-    }
-    .film__brand {
-      justify-items: center;
-      font-size: 17vw;
-    }
   }
 </style>
 
 <script>
   import { scene } from '../animations/setup';
+  import { $, $$, shots } from '../animations/shot';
 
   const root = document.querySelector<HTMLElement>('[data-film]')!;
-  const track = root.querySelector<HTMLElement>('[data-film-thread]')!;
-  const fill = root.querySelector<HTMLElement>('[data-film-fill]')!;
-  const $ = <T extends Element = SVGElement>(el: Element, s: string) => el.querySelector<T>(s)!;
-  const $$ = <T extends Element = SVGElement>(el: Element, s: string) => [...el.querySelectorAll<T>(s)];
   const shot = (name: string) => root.querySelector<HTMLElement>(`[data-shot="${name}"]`)!;
 
-  /** El hilo va del centro del primer dibujo al centro del logo final. */
-  function placeThread() {
-    const a = $<HTMLElement>(root, '[data-anchor="start"]').getBoundingClientRect();
-    const b = $<HTMLElement>(root, '[data-anchor="end"]').getBoundingClientRect();
-    const top = root.getBoundingClientRect().top;
-    const y1 = a.top + a.height / 2 - top;
-    const y2 = b.top + b.height / 2 - top;
-    track.style.top = `${y1}px`;
-    track.style.height = `${Math.max(0, y2 - y1)}px`;
-  }
-  placeThread();
-
-  scene(1.5, ({ gsap, ScrollTrigger, c }) => {
-    placeThread();
+  scene(3.2, ({ gsap, ScrollTrigger, c }) => {
     if (c.reduce) return; // todo visible y completo
+    const { take, draw } = shots(gsap, ScrollTrigger);
 
-    /* ---- El hilo: scaleY atado al scroll; su borde coincide con la cabeza, a media pantalla ---- */
-    gsap.fromTo(
-      fill,
-      { scaleY: 0 },
-      {
-        scaleY: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: track,
-          start: 'top center',
-          end: 'bottom center',
-          scrub: true,
-          onRefreshInit: placeThread,
-        },
-      },
-    );
-
-    /** Cada plano se "filma" una vez al llegar; al volver hacia arriba se rebobina. */
-    const take = (el: HTMLElement, build: (tl: gsap.core.Timeline) => void) => {
-      const tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
-      const text = $$<HTMLElement>(el, '.shot__label, .shot__cap, .shot__text > .btn, .film__brand, .film__cta-text');
-      tl.from(text, { autoAlpha: 0, y: 28, duration: 1, stagger: 0.12 }, 0.15);
-      build(tl);
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 62%',
-        onEnter: () => tl.play(),
-        onLeaveBack: () => tl.reverse(),
-      });
-    };
-    const draw = (tl: gsap.core.Timeline, t: Element[] | Element, at: number, dur = 1.2, stagger = 0) =>
-      tl.fromTo(t, { drawSVG: '0%' }, { drawSVG: '100%', duration: dur, stagger, ease: 'power2.inOut' }, at);
-
-    // 01 · origen: la partícula aparece y los anillos se abren a su alrededor.
-    take(shot('origen'), (tl) => {
-      draw(tl, $$(shot('origen'), '.v-draw'), 0, 1.6, 0.25);
-      tl.from($(shot('origen'), '[data-spark]'), { scale: 0, autoAlpha: 0, duration: 1.2, ease: 'back.out(1.6)' }, 0);
-    });
-
-    // 02 · camino: aparece el caos y se aparta para que el hilo pase sin romperse.
+    // camino: aparece el caos y se aparta para que el hilo pase sin romperse.
     take(shot('camino'), (tl) => {
       const obs = $$<SVGPathElement>(shot('camino'), '[data-obst]');
       draw(tl, obs, 0, 0.9, 0.06);
       obs.forEach((o) => tl.to(o, { x: +o.dataset.dx!, opacity: 0.55, duration: 1.4, ease: 'power2.inOut' }, 1.1));
     });
 
-    // 03 · claridad: los fragmentos se ordenan y los conceptos nacen del hilo.
+    // claridad: los fragmentos se ordenan y los conceptos nacen del hilo.
     take(shot('claridad'), (tl) => {
       const s = shot('claridad');
       $$<SVGLineElement>(s, '[data-frag]').forEach((el, i) => {
@@ -786,12 +310,12 @@ const escenas = [
       tl.from($$(s, '[data-concept]'), { autoAlpha: 0, x: (i) => (i % 2 ? -24 : 24), duration: 0.8, stagger: 0.15 }, 1.45);
     });
 
-    // 04 · loto: el hilo gira sobre sí mismo y sugiere la flor.
+    // loto: el hilo gira sobre sí mismo y sugiere la flor.
     take(shot('loto'), (tl) => {
       draw(tl, $(shot('loto'), '[data-rosa]'), 0, 2.6);
     });
 
-    // 05 · apertura: un pétalo por paso de scroll (único scrub de escena, sobre pocos elementos).
+    // apertura: un pétalo por paso de scroll (único scrub de escena, sobre pocos elementos).
     {
       const s = shot('apertura');
       const petals = $$(s, '[data-petal]');
@@ -815,7 +339,7 @@ const escenas = [
       tl.to({}, { duration: 0.4 });
     }
 
-    // 06 · centro: la luz crece, absorbe y se asienta.
+    // centro: la luz crece, absorbe y se asienta.
     take(shot('centro'), (tl) => {
       const light = $(shot('centro'), '[data-light]');
       tl.fromTo(light, { scale: 0.1, autoAlpha: 0 }, { scale: 1.9, autoAlpha: 1, duration: 1.4, ease: 'power2.out' }, 0).to(
@@ -825,7 +349,7 @@ const escenas = [
       );
     });
 
-    // 07 · construcción: planos → conexiones → edificios, documento y diagrama.
+    // construcción: planos → conexiones → edificios, documento y diagrama.
     take(shot('construccion'), (tl) => {
       const s = shot('construccion');
       draw(tl, $$(s, '.v-plan .v-draw'), 0, 1, 0.05);
@@ -833,20 +357,5 @@ const escenas = [
       draw(tl, $$(s, '[data-piece]'), 0.9, 1.4, 0.18);
     });
 
-    // 08 · legado: el recorrido completo, parada por parada.
-    take(shot('legado'), (tl) => {
-      const s = shot('legado');
-      draw(tl, $(s, '[data-map-line]'), 0, 1.6);
-      tl.from($$(s, '[data-map-stop]'), { autoAlpha: 0, duration: 0.5, stagger: 0.22 }, 0.1);
-    });
-
-    // 09 · cierre: el contorno del loto y luego el yantra completo del logo.
-    take(shot('cierre'), (tl) => {
-      const y = $(shot('cierre'), '.film__yantra');
-      draw(tl, $$(y, '.y-circles .y-draw'), 0, 0.9, 0.12);
-      draw(tl, $$(y, '.y-petals .y-draw'), 0.4, 0.9, 0.05);
-      draw(tl, $$(y, '.y-triangles .y-draw, .y-bindu .y-draw'), 0.8, 0.9, 0.08);
-      draw(tl, $$(y, '.y-frame .y-draw'), 1.1, 1, 0.03);
-    });
   });
 </script>

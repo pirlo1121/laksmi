@@ -1,0 +1,140 @@
+---
+/**
+ * Cierre del hilo (escenas 8 y 9): el recorrido completo en miniatura y el loto que se vuelve el logo.
+ * Aquí termina el hilo de la página: [data-thread-end] es el centro del yantra.
+ */
+import '../styles/film.css';
+import Yantra from './Yantra.astro';
+
+const recorrido = ['La firma', 'Cuatro áreas', 'El camino', 'El loto', 'Seguridad social', 'El equipo'];
+---
+
+<section class="cierre" aria-labelledby="cierre-title" data-cierre>
+  <h2 class="sr-only" id="cierre-title">Legado</h2>
+
+  <!-- Legado: todo el recorrido, conectado por el mismo hilo -->
+  <article class="shot shot--right" data-shot="legado">
+    <div class="shot__visual" aria-hidden="true">
+      <svg viewBox="-200 -200 400 400">
+        <path class="v-thread" d="M 0 -170 V 170" data-map-line></path>
+        {
+          recorrido.map((r, i) => {
+            const y = -170 + i * 68;
+            return (
+              <g data-map-stop>
+                <circle class="v-stop" cy={y} r="6" />
+                <text class="v-map" x={i % 2 ? 20 : -20} y={y + 5} text-anchor={i % 2 ? 'start' : 'end'}>
+                  {r}
+                </text>
+              </g>
+            );
+          })
+        }
+      </svg>
+    </div>
+    <div class="shot__text">
+      <p class="shot__label"><span>—</span>Legado</p>
+      <p class="shot__cap">
+        <span class="shot__line">Más que resolver conflictos.</span>
+        <span class="shot__line shot__line--sand">Construimos futuro.</span>
+      </p>
+    </div>
+  </article>
+
+  <!-- Cierre: el loto se vuelve el logo -->
+  <article class="shot shot--end" data-shot="cierre">
+    <div class="shot__visual cierre__logo" aria-hidden="true" data-thread-end>
+      <Yantra class="cierre__yantra" />
+    </div>
+    <div class="shot__text">
+      <p class="cierre__brand" aria-label="LAKSMI Abogados" data-shot-text>
+        <span aria-hidden="true">LAKSMI</span>
+        <span class="cierre__brand-sub" aria-hidden="true">Abogados</span>
+      </p>
+      <p class="cierre__cta-text" data-shot-text>Agende una consulta</p>
+      <a class="btn btn--primary" href="#contacto">Contactar un abogado <span class="arrow">→</span></a>
+    </div>
+  </article>
+</section>
+
+<style>
+  .cierre {
+    position: relative;
+  }
+  .cierre__logo :global(.cierre__yantra) {
+    width: 100%;
+    height: 100%;
+    color: var(--sand);
+    background: var(--ink); /* el hilo termina detrás del logo */
+    --yantra-stroke: 1.3px;
+  }
+  .cierre__brand {
+    display: grid;
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: clamp(3rem, 6.5vw, 6.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .cierre__brand-sub {
+    font-weight: 300;
+    font-style: italic;
+    font-size: 0.5em;
+    letter-spacing: -0.01em;
+    color: var(--sand);
+  }
+  .cierre__cta-text {
+    margin: 1.5rem 0 1rem;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .shot.shot--end .shot__text {
+    max-width: none;
+  }
+  .shot--end .btn {
+    white-space: nowrap;
+  }
+  @media (max-width: 899px) {
+    .shot.shot--end .shot__text {
+      width: 100%;
+    }
+    .cierre__brand {
+      justify-items: center;
+      font-size: 17vw;
+    }
+  }
+</style>
+
+<script>
+  import { scene } from '../animations/setup';
+  import { $, $$, shots } from '../animations/shot';
+
+  const root = document.querySelector<HTMLElement>('[data-cierre]')!;
+  const shot = (name: string) => root.querySelector<HTMLElement>(`[data-shot="${name}"]`)!;
+
+  scene(6.5, ({ gsap, ScrollTrigger, c }) => {
+    if (c.reduce) return;
+    const { take, draw } = shots(gsap, ScrollTrigger);
+
+    // Legado: el recorrido completo, parada por parada.
+    take(shot('legado'), (tl) => {
+      const s = shot('legado');
+      draw(tl, $(s, '[data-map-line]'), 0, 1.6);
+      tl.from($$(s, '[data-map-stop]'), { autoAlpha: 0, duration: 0.5, stagger: 0.22 }, 0.1);
+    });
+
+    // Cierre: el contorno del loto y luego el yantra completo del logo.
+    take(shot('cierre'), (tl) => {
+      const y = $(shot('cierre'), '.cierre__yantra');
+      draw(tl, $$(y, '.y-circles .y-draw'), 0, 0.9, 0.12);
+      draw(tl, $$(y, '.y-petals .y-draw'), 0.4, 0.9, 0.05);
+      draw(tl, $$(y, '.y-triangles .y-draw, .y-bindu .y-draw'), 0.8, 0.9, 0.08);
+      draw(tl, $$(y, '.y-frame .y-draw'), 1.1, 1, 0.03);
+    });
+  });
+</script>

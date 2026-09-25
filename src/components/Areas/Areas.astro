@@ -1,8 +1,8 @@
 ---
 /**
- * Áreas · parte 1: índice editorial.
- * Cuatro filas grandes (número, nombre, resumen). Al pasar el cursor la fila se ilumina y las demás
- * ceden; cada fila lleva a su detalle en AreasDetalle.
+ * Áreas · índice sobre el hilo.
+ * Cada área es un nodo del hilo con su tarjeta a un lado (alterna en desktop). La tarjeta lleva a
+ * su capítulo de detalle más abajo, que el mismo hilo alcanza al bajar.
  */
 import { areas } from '../../data/areas';
 import { glosario } from '../../data/paquetes';
@@ -13,303 +13,211 @@ const servicios = (a: (typeof areas)[number]) =>
 ---
 
 <section class="areas" id="areas" aria-labelledby="areas-title" data-areas>
-  <div class="container">
-    <header class="areas__head">
-      <div>
-        <p class="eyebrow">Las protagonistas de la firma</p>
-        <h2 class="display areas__title" id="areas-title">
-          <span class="mask"><span class="line">Cuatro áreas</span></span>
-        </h2>
-      </div>
-      <p class="areas__intro" data-areas-fade>
-        Una sola firma para lo laboral, lo familiar, su seguridad social y su defensa penal. Elija un área y
-        vea en detalle cómo le acompañamos.
-      </p>
-    </header>
+  <header class="areas__head">
+    <p class="eyebrow">Las protagonistas de la firma</p>
+    <h2 class="display areas__title" id="areas-title">
+      <span class="mask"><span class="line">Cuatro áreas</span></span>
+    </h2>
+    <p class="areas__intro">
+      Una sola firma para lo laboral, lo familiar, su seguridad social y su defensa penal.
+    </p>
+  </header>
 
-    <ol class="areas__list" role="list" data-areas-list>
-      {
-        areas.map((a) => (
-          <li class="area-row" data-area-row>
-            <span class="area-row__rule" aria-hidden="true" />
-            <a class="area-row__link" href={`#${a.id}`}>
-              <span class="area-row__num">{a.numero}</span>
-              <span class="area-row__name display">
-                <span class="area-row__mask">
-                  <span class="line">{a.titulo[0]}</span>
-                </span>
-                <span class="area-row__mask">
-                  <span class="light">{a.titulo[1]}</span>
-                </span>
-              </span>
-              <span class="area-row__summary">{a.resumen}</span>
-              <span class="area-row__meta">
-                <span class="area-row__count">{servicios(a)}</span>
-                <span class="area-row__go" aria-hidden="true">
-                  <Yantra class="area-row__glyph" rotate={a.rotacion} lit={a.gate} />
-                  <span class="area-row__arrow">→</span>
-                </span>
-              </span>
-            </a>
-          </li>
-        ))
-      }
-      <li class="area-row area-row--end" aria-hidden="true">
-        <span class="area-row__rule" />
-      </li>
-    </ol>
-  </div>
+  <ol class="areas__list container" role="list">
+    {
+      areas.map((a, i) => (
+        <li class:list={['anode', { 'anode--right': i % 2 === 1 }]} data-anode>
+          <span class="anode__dot" aria-hidden="true">
+            {a.numero}
+          </span>
+          <span class="anode__link" aria-hidden="true" />
+          <a class="anode__card" href={`#${a.id}`}>
+            <span class="anode__top">
+              <span class="anode__count">{servicios(a)}</span>
+              <Yantra class="anode__glyph" rotate={a.rotacion} lit={a.gate} />
+            </span>
+            <span class="anode__name display">
+              <span class="line">{a.titulo[0]}</span>
+              <span class="light">{a.titulo[1]}</span>
+            </span>
+            <span class="anode__summary">{a.resumen}</span>
+            <span class="anode__go">
+              Ver en detalle <span aria-hidden="true">↓</span>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
 </section>
 
 <style>
   .areas {
     position: relative;
-    padding-block: clamp(4rem, 10vw, 8rem) clamp(3rem, 6vw, 5rem);
+    padding-block: clamp(3rem, 8vh, 5rem) clamp(4rem, 10vh, 7rem);
   }
+  /* Tarjeta de título centrada: el hilo pasa por detrás. */
   .areas__head {
-    display: grid;
-    grid-template-columns: 1fr minmax(0, 36ch);
-    align-items: end;
-    gap: 2rem 4rem;
-    margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+    width: fit-content;
+    max-width: calc(100% - 2 * var(--gutter));
+    margin: 0 auto clamp(3rem, 8vh, 5rem);
+    padding: 1.25rem 1.75rem;
+    background: var(--ink);
+    text-align: center;
   }
   .areas__head .eyebrow {
     margin-bottom: 1rem;
   }
   .areas__title {
-    font-size: clamp(3rem, 8vw, 8rem);
+    font-size: clamp(3rem, 7vw, 7rem);
   }
   .areas__intro {
-    margin: 0;
+    max-width: 38ch;
+    margin: 1.25rem auto 0;
     color: var(--text-dim);
-    font-size: clamp(1rem, 1.2vw, 1.125rem);
     line-height: 1.6;
   }
 
   .areas__list {
     list-style: none;
-    margin: 0;
-    padding: 0;
+    margin: 0 auto;
+    padding-block: 0;
+    display: grid;
+    gap: clamp(2.5rem, 7vh, 4.5rem);
   }
-  .area-row {
-    position: relative;
-  }
-  .area-row__rule {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--line);
-    transform-origin: left;
-  }
-  .area-row--end {
-    height: 1px;
-  }
-
-  .area-row__link {
+  /* Cada nodo: dos columnas con el hilo en el hueco central. */
+  .anode {
     position: relative;
     display: grid;
-    grid-template-columns: 4.5rem minmax(0, 1.25fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(4rem, 10vw, 9rem);
     align-items: center;
-    gap: 1rem clamp(1.5rem, 3vw, 3rem);
-    padding: clamp(1.5rem, 2.6vw, 2.25rem) clamp(0.75rem, 1.5vw, 1.5rem);
-    text-decoration: none;
-    color: var(--text);
-    isolation: isolate;
-    transition: opacity 0.5s var(--ease-out);
   }
-  /* Fondo que se despliega desde la izquierda al pasar el cursor. */
-  .area-row__link::before {
-    content: '';
+  .anode__dot {
     position: absolute;
-    inset: 0;
-    z-index: -1;
-    background: linear-gradient(90deg, rgba(241, 209, 152, 0.07), rgba(241, 209, 152, 0.015) 70%, transparent);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform 0.7s var(--ease-out);
-  }
-
-  .area-row__num {
-    align-self: start;
-    padding-top: 0.5em;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--sand);
+    border-radius: 50%;
+    background: var(--ink);
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 15px;
-    letter-spacing: 0.08em;
-    color: var(--text-dim);
-    transition: color 0.4s var(--ease-out);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--sand);
   }
-  .area-row__name {
-    font-size: clamp(2.25rem, 4.2vw, 4.25rem);
-    line-height: 0.9;
-    transition: transform 0.6s var(--ease-out);
+  /* Conector del nodo a la tarjeta. */
+  .anode__link {
+    position: absolute;
+    top: 50%;
+    height: 1px;
+    width: calc(clamp(4rem, 10vw, 9rem) / 2 - 24px);
+    right: calc(50% + 24px);
+    background: var(--sand);
+    opacity: 0.6;
+    transform-origin: right;
   }
-  .area-row__mask {
-    display: block;
-    overflow: hidden;
-    padding-block: 0.08em 0.06em;
-    margin-block: -0.08em -0.06em;
+  .anode--right .anode__link {
+    right: auto;
+    left: calc(50% + 24px);
+    transform-origin: left;
   }
-  .area-row__name .line,
-  .area-row__name .light {
-    display: block;
+  .anode__card {
+    grid-column: 1;
+    position: relative;
+    display: grid;
+    gap: 0.9rem;
+    padding: clamp(1.5rem, 2.5vw, 2.25rem);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--ink-2);
+    color: var(--text);
+    text-decoration: none;
+    transition:
+      border-color 0.4s var(--ease-out),
+      transform 0.5s var(--ease-out);
   }
-  .area-row__summary {
-    max-width: 44ch;
-    color: var(--text-dim);
-    font-size: 15px;
-    line-height: 1.6;
-    transition: color 0.4s var(--ease-out);
+  .anode--right .anode__card {
+    grid-column: 2;
   }
-  .area-row__meta {
+  .anode__card:hover,
+  .anode__card:focus-visible {
+    border-color: rgba(241, 209, 152, 0.5);
+    transform: translateY(-3px);
+  }
+  .anode__top {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 14px;
+    justify-content: space-between;
+    align-items: center;
   }
-  .area-row__count {
+  .anode__count {
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--text-dim);
-    white-space: nowrap;
   }
-  .area-row__go {
-    position: relative;
-    display: grid;
-    place-items: center;
-    width: 56px;
-    height: 56px;
-    border: 1px solid var(--line);
-    border-radius: 50%;
-    transition:
-      border-color 0.4s var(--ease-out),
-      background-color 0.4s var(--ease-out);
-  }
-  .area-row__go :global(.area-row__glyph) {
-    position: absolute;
-    inset: 9px;
-    width: auto;
-    height: auto;
+  .anode__card :global(.anode__glyph) {
+    width: 36px;
+    height: 36px;
     color: var(--text-dim);
     --gate-color: var(--text-dim);
     --yantra-stroke: 0.8px;
     --yantra-stroke-lit: 1.4px;
-    opacity: 1;
-    transition:
-      opacity 0.4s var(--ease-out),
-      transform 0.7s var(--ease-out);
+    transition: transform 0.7s var(--ease-out);
   }
-  .area-row__arrow {
-    font-size: 20px;
-    color: var(--ink);
-    opacity: 0;
-    transform: translateX(-10px);
-    transition:
-      opacity 0.4s var(--ease-out),
-      transform 0.5s var(--ease-out);
+  .anode__card:hover :global(.anode__glyph) {
+    transform: rotate(45deg);
   }
-
-  /* ---- Hover / foco ---- */
-  .area-row__link:focus-visible {
-    outline-offset: -2px;
+  .anode__name {
+    font-size: clamp(2rem, 3.4vw, 3.4rem);
+    line-height: 0.9;
   }
-  .area-row__link:is(:hover, :focus-visible)::before {
-    transform: scaleX(1);
+  .anode__summary {
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.6;
   }
-  .area-row__link:is(:hover, :focus-visible) .area-row__num {
+  .anode__go {
+    font-size: 13px;
+    font-weight: 600;
     color: var(--sand);
   }
-  .area-row__link:is(:hover, :focus-visible) .area-row__name {
-    transform: translateX(10px);
+  .anode__go span {
+    display: inline-block;
+    transition: transform 0.4s var(--ease-out);
   }
-  .area-row__link:is(:hover, :focus-visible) .area-row__summary {
-    color: var(--text);
-  }
-  .area-row__link:is(:hover, :focus-visible) .area-row__go {
-    border-color: var(--sand);
-    background: var(--sand);
-  }
-  .area-row__link:is(:hover, :focus-visible) :global(.area-row__glyph) {
-    opacity: 0;
-    transform: rotate(45deg) scale(0.6);
-  }
-  .area-row__link:is(:hover, :focus-visible) .area-row__arrow {
-    opacity: 1;
-    transform: none;
-  }
-  /* Las demás filas ceden protagonismo. */
-  @media (hover: hover) {
-    .areas__list:has(.area-row__link:hover) .area-row__link:not(:hover) {
-      opacity: 0.4;
-    }
+  .anode__card:hover .anode__go span {
+    transform: translateY(3px);
   }
 
-  /* ---- Tablet ---- */
-  @media (max-width: 1023px) {
-    .areas__head {
-      grid-template-columns: 1fr;
-    }
-    .area-row__link {
-      grid-template-columns: 3rem minmax(0, 1fr) auto;
-      grid-template-areas:
-        'num name meta'
-        '.   sum  meta';
-      align-items: start;
-    }
-    .area-row__num {
-      grid-area: num;
-    }
-    .area-row__name {
-      grid-area: name;
-    }
-    .area-row__summary {
-      grid-area: sum;
-    }
-    .area-row__meta {
-      grid-area: meta;
-      align-self: center;
-    }
-  }
-
-  /* ---- Móvil ---- */
+  /* Móvil: una columna; el nodo va sobre el hilo, encima de su tarjeta. */
   @media (max-width: 767px) {
     .areas__title {
-      font-size: 14vw;
-      line-height: 1.05; /* deja ver la tilde de ÁREAS en la segunda línea */
+      font-size: 13vw;
+      line-height: 1.05;
     }
-    .area-row__link {
-      grid-template-columns: minmax(0, 1fr) auto;
-      grid-template-areas:
-        'num  meta'
-        'name name'
-        'sum  sum';
-      gap: 0.75rem 1rem;
-      padding-inline: 0;
+    .anode {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 1rem;
+      justify-items: center;
     }
-    .area-row__num {
-      padding-top: 0;
-      align-self: center;
+    .anode__dot {
+      position: static;
+      translate: none;
     }
-    .area-row__name {
-      font-size: clamp(2.1rem, 11vw, 3rem);
+    .anode__link {
+      display: none;
     }
-    .area-row__meta {
-      flex-direction: row-reverse;
-      align-items: center;
-    }
-    .area-row__go {
-      width: 44px;
-      height: 44px;
-    }
-    .area-row__go :global(.area-row__glyph) {
-      inset: 7px;
-    }
-    .area-row__link:is(:hover, :focus-visible) .area-row__name {
-      transform: none;
+    .anode__card,
+    .anode--right .anode__card {
+      grid-column: 1;
+      width: 100%;
     }
   }
 </style>
@@ -321,11 +229,10 @@ const servicios = (a: (typeof areas)[number]) =>
 
   const root = document.querySelector<HTMLElement>('[data-areas]')!;
 
-  /* ---- Entrada: las líneas se trazan y cada fila sube desde su máscara ---- */
   scene(3, ({ gsap, c }) => {
     if (c.reduce) return;
     revealLines(gsap, root.querySelector('.areas__title')!, root, 'top 75%');
-    gsap.from(root.querySelectorAll('.areas__head .eyebrow, [data-areas-fade]'), {
+    gsap.from(root.querySelectorAll('.areas__head .eyebrow, .areas__intro'), {
       autoAlpha: 0,
       y: 16,
       duration: DUR.base,
@@ -334,20 +241,17 @@ const servicios = (a: (typeof areas)[number]) =>
       scrollTrigger: { trigger: root, start: 'top 75%', once: true },
     });
 
-    const rows = [...root.querySelectorAll<HTMLElement>('.area-row')];
-    rows.forEach((row) => {
-      const tl = gsap.timeline({ scrollTrigger: { trigger: row, start: 'top 88%', once: true } });
-      tl.from(row.querySelector('.area-row__rule'), { scaleX: 0, duration: 1.1, ease: EASE.enter }, 0);
-      const name = row.querySelectorAll('.area-row__name .line, .area-row__name .light');
-      if (!name.length) return;
-      tl.from(name, { yPercent: 110, duration: 1, ease: EASE.enter, stagger: 0.08 }, 0.1)
-        .from(row.querySelectorAll('.area-row__num, .area-row__summary, .area-row__meta'), {
-          autoAlpha: 0,
-          y: 18,
-          duration: 0.8,
-          ease: EASE.heavy,
-          stagger: 0.06,
-        }, 0.2);
+    // Cada nodo se enciende cuando el hilo llega a él: punto → conector → tarjeta.
+    root.querySelectorAll<HTMLElement>('[data-anode]').forEach((node) => {
+      const right = node.classList.contains('anode--right');
+      const tl = gsap.timeline({ scrollTrigger: { trigger: node, start: 'top 70%', once: true } });
+      tl.from(node.querySelector('.anode__dot'), { scale: 0, autoAlpha: 0, duration: 0.6, ease: 'back.out(2)' }, 0)
+        .from(node.querySelector('.anode__link'), { scaleX: 0, duration: 0.5, ease: 'power2.out' }, 0.25)
+        .from(
+          node.querySelector('.anode__card'),
+          { autoAlpha: 0, x: c.desktop ? (right ? 40 : -40) : 0, y: c.desktop ? 0 : 24, duration: 0.9, ease: EASE.enter },
+          0.35,
+        );
     });
   });
 </script>

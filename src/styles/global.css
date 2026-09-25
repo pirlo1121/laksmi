@@ -36,6 +36,11 @@ body.is-locked {
   overflow: hidden;
 }
 
+/* Referencia del hilo de la página (Hilo.astro). Sin z-index: el hilo (-1) queda detrás del contenido. */
+main {
+  position: relative;
+}
+
 img,
 svg {
   display: block;

@@ -1,0 +1,128 @@
+---
+/**
+ * El hilo de toda la página.
+ * Va de [data-thread-start] (el inicio, con la información de la firma) a [data-thread-end]
+ * (el centro del logo final), por el centro de la pantalla y DETRÁS del contenido (z-index -1):
+ * se ve donde la sección es transparente y pasa por detrás de los paneles con fondo.
+ *
+ * Rendimiento: una sola línea que se llena con scaleY (solo compositor) y una cabeza `sticky`
+ * a media pantalla, sin JS por cuadro.
+ */
+---
+
+<div class="hilo" aria-hidden="true" data-hilo>
+  <span class="hilo__fill" data-hilo-fill></span>
+  <span class="hilo__head"><span></span></span>
+</div>
+
+<style>
+  .hilo {
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 0; /* lo ajusta el JS */
+    margin-left: -0.5px;
+    background: rgba(241, 209, 152, 0.13);
+    pointer-events: none;
+  }
+  .hilo__fill {
+    position: absolute;
+    inset: 0;
+    background: var(--sand);
+    box-shadow: 0 0 10px rgba(241, 209, 152, 0.55);
+    transform-origin: top;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.js) .hilo__fill {
+      transform: scaleY(0);
+      will-change: transform;
+    }
+  }
+  /* Cabeza: queda a media pantalla mientras el hilo recorre la página. */
+  .hilo__head {
+    position: sticky;
+    top: 50vh;
+    top: 50dvh;
+    display: block;
+    height: 0;
+  }
+  .hilo__head span {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 64px;
+    height: 64px;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      #fff3dc 0 3px,
+      rgba(241, 209, 152, 0.5) 4px,
+      rgba(241, 209, 152, 0.12) 40%,
+      transparent 70%
+    );
+  }
+  :global(html:not(.js)) .hilo__head {
+    display: none;
+  }
+</style>
+
+<script>
+  import { scene } from '../animations/setup';
+
+  const track = document.querySelector<HTMLElement>('[data-hilo]')!;
+  const fill = track.querySelector<HTMLElement>('[data-hilo-fill]')!;
+  const host = track.offsetParent as HTMLElement | null;
+
+  const center = (sel: string) => {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return r.top + r.height / 2 + window.scrollY;
+  };
+
+  /** Coloca el hilo entre sus dos anclas (en coordenadas de su contenedor). */
+  function place() {
+    const a = center('[data-thread-start]');
+    const b = center('[data-thread-end]');
+    if (a == null || b == null || !host) return { a: 0, b: 0 };
+    const hostTop = host.getBoundingClientRect().top + window.scrollY;
+    track.style.top = `${a - hostTop}px`;
+    track.style.height = `${Math.max(0, b - a)}px`;
+    return { a, b };
+  }
+  place();
+
+  // Se registra al final: así mide la página ya con todas las demás escenas montadas.
+  scene(99, ({ gsap, ScrollTrigger, c }) => {
+    place();
+    if (c.reduce) return;
+
+    // Borde del relleno = cabeza, siempre a media pantalla.
+    gsap.fromTo(
+      fill,
+      { scaleY: 0 },
+      {
+        scaleY: 1,
+        ease: 'none',
+        scrollTrigger: {
+          start: () => place().a - window.innerHeight / 2,
+          end: () => place().b - window.innerHeight / 2,
+          scrub: true,
+          invalidateOnRefresh: true,
+        },
+      },
+    );
+
+    // Si cambia el alto de la página (imágenes, fuentes, paneles), se vuelve a medir.
+    let t = 0;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(t);
+      t = window.setTimeout(() => ScrollTrigger.refresh(), 200);
+    });
+    ro.observe(document.body);
+    return () => ro.disconnect();
+  });
+</script>

@@ -44,7 +44,7 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   </div>
 
   <div class="container">
-    <ul class="equipo__grid" role="list">
+    <ul class="equipo__grid" role="list" data-equipo-grid>
       {
         equipo.map((m) => {
           const Tag = m.bio.length ? 'button' : 'div';
@@ -153,12 +153,58 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   }
 
   .equipo__grid {
+    --gap: clamp(1rem, 2vw, 2rem);
+    --branch: 2.5rem;
+    position: relative;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(1rem, 2vw, 2rem);
-    margin: clamp(2rem, 5vw, 4rem) 0;
+    gap: var(--gap);
+    margin: calc(clamp(2rem, 5vw, 4rem) + var(--branch)) 0 clamp(2rem, 5vw, 4rem);
     padding: 0;
     list-style: none;
+  }
+  /* Rama del hilo: baja por el centro, se abre en horizontal y llega a cada integrante. */
+  .equipo__grid::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--branch) * -1);
+    left: calc((100% - 3 * var(--gap)) / 8);
+    right: calc((100% - 3 * var(--gap)) / 8);
+    height: 1px;
+    background: var(--sand);
+    opacity: 0.6;
+    transform: scaleX(var(--branch-p, 1));
+    transition: transform 1.1s var(--ease-out);
+  }
+  .equipo__grid::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: calc(var(--branch) * -1);
+    width: 9px;
+    height: 9px;
+    translate: -50% -50%;
+    rotate: 45deg;
+    background: var(--sand);
+  }
+  .miembro {
+    position: relative;
+  }
+  .miembro::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: calc(var(--branch) * -1);
+    width: 1px;
+    height: var(--branch);
+    background: var(--sand);
+    opacity: 0.6;
+    transform: scaleY(var(--branch-p, 1));
+    transform-origin: top;
+    transition: transform 0.6s var(--ease-out) 0.7s;
+  }
+  :global(html.js) .equipo__grid:not(.is-linked) {
+    --branch-p: 0;
   }
   .miembro__card {
     display: flex;
@@ -250,10 +296,18 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
     .equipo__head {
       padding-top: 2rem;
       padding-bottom: 0;
+      background: var(--ink); /* el hilo pasa por detrás del título */
     }
     .equipo__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       row-gap: 2.5rem;
+    }
+    .equipo__grid::before {
+      left: calc((100% - var(--gap)) / 4);
+      right: calc((100% - var(--gap)) / 4);
+    }
+    .miembro:nth-child(n + 3)::before {
+      display: none;
     }
   }
 
@@ -270,6 +324,17 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   import { revealLines } from '../../animations/reveal';
 
   const root = document.querySelector<HTMLElement>('[data-equipo]')!;
+
+  // Cuando el hilo llega al equipo, la rama se abre hacia cada integrante (transición CSS).
+  const grid = root.querySelector<HTMLElement>('[data-equipo-grid]')!;
+  new IntersectionObserver(
+    ([e], obs) => {
+      if (!e.isIntersecting) return;
+      grid.classList.add('is-linked');
+      obs.disconnect();
+    },
+    { rootMargin: '0px 0px -35% 0px' },
+  ).observe(grid);
   const openers = [...root.querySelectorAll<HTMLButtonElement>('[data-perfil-open]')];
   let current: { btn: HTMLButtonElement; panel: HTMLElement } | null = null;
 

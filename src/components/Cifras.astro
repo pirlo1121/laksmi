@@ -1,15 +1,24 @@
 ---
-import { cifras } from '../data/site';
+import { cifras, site } from '../data/site';
 ---
 
-<section class="cifras" aria-label="La firma en cifras" data-cifras>
-  <span class="cifras__rule" aria-hidden="true"></span>
+<!-- Inicio del hilo: la firma y sus cifras. El hilo nace en la partícula y baja por el centro. -->
+<section class="firma" aria-labelledby="firma-title" data-cifras>
+  <div class="firma__start" aria-hidden="true" data-thread-start>
+    <span class="firma__spark"></span>
+  </div>
+
+  <header class="firma__head">
+    <p class="eyebrow">La firma</p>
+    <h2 class="firma__title" id="firma-title">Cada historia comienza con una decisión.</h2>
+    <p class="firma__lead">{site.nombre} · {site.marca}</p>
+  </header>
+
   <div class="container">
-    <ul class="cifras__grid" role="list">
+    <ul class="cifras__grid" role="list" aria-label="La firma en cifras">
       {
         cifras.map((c) => (
           <li class="cifras__cell">
-            <span class="cifras__line" aria-hidden="true" />
             <strong
               class:list={['cifras__num', { 'is-accent': c.texto }]}
               data-count={c.valor ?? undefined}
@@ -28,53 +37,79 @@ import { cifras } from '../data/site';
 </section>
 
 <style>
-  .cifras {
+  .firma {
     position: relative;
-    padding-block: clamp(4rem, 10vh, 7rem);
-    min-height: 48vh;
-    display: flex;
-    align-items: center;
+    padding-block: clamp(4rem, 12vh, 8rem) clamp(4rem, 10vh, 7rem);
   }
-  .cifras__rule {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: var(--sand);
-    transform-origin: left;
+  .firma__start {
+    display: grid;
+    place-items: center;
+    height: 90px;
+    margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
   }
+  .firma__spark {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      #fff3dc 0 4px,
+      rgba(241, 209, 152, 0.45) 5px,
+      rgba(241, 209, 152, 0.1) 40%,
+      transparent 70%
+    );
+    animation: firma-spark 3.2s ease-in-out infinite;
+  }
+  @keyframes firma-spark {
+    50% {
+      transform: scale(1.12);
+    }
+  }
+  /* Tarjeta de título: el hilo pasa por detrás. */
+  .firma__head {
+    position: relative;
+    width: fit-content;
+    max-width: min(720px, calc(100% - 2 * var(--gutter)));
+    margin: 0 auto clamp(3rem, 8vh, 5rem);
+    padding: 1.25rem 1.5rem;
+    background: var(--ink);
+    text-align: center;
+  }
+  .firma__head .eyebrow {
+    margin-bottom: 1rem;
+  }
+  .firma__title {
+    margin: 0 0 1rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.8rem, 3.4vw, 3.2rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .firma__lead {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* Cifras simétricas a los lados del hilo: el hueco central queda libre para él. */
   .cifras__grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: clamp(2rem, 6vw, 6rem);
+    row-gap: 2.5rem;
   }
   .cifras__cell {
-    position: relative;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 1rem;
-    padding: 2rem clamp(1rem, 2vw, 2rem) 2rem;
-  }
-  .cifras__line {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 1px;
-    background: var(--line);
-    transform-origin: top;
-  }
-  .cifras__cell:last-child::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 1px;
-    background: var(--line);
+    text-align: center;
   }
   .cifras__num {
     font-family: var(--font-display);
@@ -117,34 +152,21 @@ import { cifras } from '../data/site';
     width: 56px;
     height: 2px;
     background: var(--sand);
-    transform-origin: left;
   }
   .cifras__label {
     max-width: 14ch;
   }
 
   @media (max-width: 767px) {
-    .cifras {
-      min-height: 0;
-    }
     .cifras__grid {
-      grid-template-columns: repeat(2, 1fr);
-      row-gap: 1rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 3rem;
     }
     .cifras__num {
       font-size: 12vw;
     }
     .cifras__num.is-accent {
       font-size: 8.2vw;
-    }
-    .cifras__cell:nth-child(2)::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 0;
-      width: 1px;
-      background: var(--line);
     }
   }
 </style>
@@ -193,12 +215,13 @@ import { cifras } from '../data/site';
 
     const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: 'top 78%', once: true } });
 
-    tl.from(root.querySelector('.cifras__rule'), { scaleX: 0, duration: DUR.slow, ease: EASE.enter }, 0);
-    tl.from(root.querySelectorAll('.cifras__line'), { scaleY: 0, duration: 0.9, ease: EASE.heavy, stagger: 0.1 }, 0.1);
+    // El hilo nace: la partícula aparece y el encabezado sube.
+    tl.from(root.querySelector('.firma__spark'), { scale: 0, autoAlpha: 0, duration: 1.1, ease: 'back.out(1.6)' }, 0);
+    tl.from(root.querySelectorAll('.firma__head > *'), { autoAlpha: 0, y: 24, duration: DUR.base, ease: EASE.heavy, stagger: 0.1 }, 0.2);
 
     const cells = [...root.querySelectorAll<HTMLElement>('.cifras__cell')];
     cells.forEach((cell, i) => {
-      const at = 0.25 + i * 0.14;
+      const at = 0.7 + i * 0.14;
       const num = cell.querySelector<HTMLElement>('.cifras__num')!;
       const bar = cell.querySelector('.cifras__bar');
       const label = cell.querySelector('.cifras__label');

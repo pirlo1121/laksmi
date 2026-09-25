@@ -14,6 +14,8 @@ import Equipo from '../components/Equipo/Equipo.astro';
 import Testimonios from '../components/Testimonios.astro';
 import Contacto from '../components/Contacto/Contacto.astro';
 import Footer from '../components/Footer.astro';
+import Hilo from '../components/Hilo.astro';
+import Cierre from '../components/Cierre.astro';
 ---
 
 <Base>
@@ -21,14 +23,17 @@ import Footer from '../components/Footer.astro';
   <HoverGlow />
   <Nav />
   <main id="contenido">
+    <!-- Un solo hilo recorre la página: nace en la firma y termina en el logo del cierre. -->
+    <Hilo />
     <Hero />
-    <Historia />
     <Cifras />
     <Areas />
+    <Historia />
     <AreasDetalle />
     <SeguridadSocial />
     <Equipo />
     <Testimonios />
+    <Cierre />
     <Contacto />
   </main>
   <Footer />
