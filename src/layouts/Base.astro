@@ -1,7 +1,6 @@
 ---
 import '../styles/global.css';
 import { seo, site } from '../data/site';
-import { PRELOADER } from '../animations/constants';
 
 interface Props {
   title?: string;
@@ -39,18 +38,12 @@ const canonical = new URL(Astro.url.pathname, site.url);
     />
     {preloadHero && <link rel="preload" as="image" href={preloadHero} fetchpriority="high" />}
 
-    <!-- Antes del primer pintado: marca que hay JS y decide si se muestra el preloader. -->
-    <script is:inline define:vars={{ key: PRELOADER.sessionKey }}>
+    <!-- Antes del primer pintado: marca que hay JS y decide si se muestra el preloader (portal). -->
+    <script is:inline>
       (function () {
         var d = document.documentElement;
         d.classList.add('js');
-        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var seen = false;
-        try {
-          seen = sessionStorage.getItem(key) === '1';
-          sessionStorage.setItem(key, '1');
-        } catch (e) {}
-        if (reduce || seen) d.classList.add('no-preloader');
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('no-preloader');
       })();
     </script>
   </head>

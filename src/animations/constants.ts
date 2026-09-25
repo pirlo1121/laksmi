@@ -14,8 +14,7 @@ export const BP = {
 } as const;
 
 export const PRELOADER = {
-  maxWait: 2.5, // s: tope de espera por fuentes + imagen del hero
-  sessionKey: 'laksmi:visited',
+  maxWait: 4, // s: tope de espera por fuentes + imagen del hero
 } as const;
 
 export const TESTIMONIO_MS = 6000;

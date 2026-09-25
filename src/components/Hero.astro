@@ -1,21 +1,22 @@
 ---
 import { Picture } from 'astro:assets';
-import bogota from '../assets/brand/bogota.jpg';
+import bogota from '../assets/brand/bogota-hd.jpg';
 import { site } from '../data/site';
 import Yantra from './Yantra.astro';
 
-// [PENDIENTE] imagen/video del hero en alta resolución (hoy 1280×720).
+// Foto: Dan Gold, «Bogotá city night desde Monserrate» — CC BY-SA 4.0, Wikimedia Commons (original 5506×3098).
 const title = 'LAKSMI';
 ---
 
 <section class="hero" id="top" data-hero aria-labelledby="hero-title">
   <div class="hero__stage">
-    <div class="hero__media" aria-hidden="true">
+    <div class="hero__media" aria-hidden="true" data-hero-media>
       <Picture
         src={bogota}
         formats={['avif', 'webp']}
-        widths={[640, 960, 1280]}
-        sizes="100vw"
+        widths={[640, 960, 1280, 1920, 2560, 3200, 3840]}
+        quality={82}
+        sizes="(max-aspect-ratio: 16/9) 178vh, 100vw"
         alt=""
         loading="eager"
         fetchpriority="high"
@@ -91,6 +92,7 @@ const title = 'LAKSMI';
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: 50% 60%;
     transform-origin: 50% 60%;
   }
   .hero__overlay {
@@ -167,7 +169,7 @@ const title = 'LAKSMI';
   /* Con JS el yantra espera su entrada (o la llegada del preloader). Salvavidas si el JS falla. */
   :global(html.js) .hero__yantra-spin {
     visibility: hidden;
-    animation: hero-yantra-failsafe 0s 5.5s forwards;
+    animation: hero-yantra-failsafe 0s 8s forwards;
   }
   @keyframes hero-yantra-failsafe {
     to {
@@ -386,7 +388,6 @@ const title = 'LAKSMI';
       entrancePlayed = true;
       const chars = qa('.hero__char');
       const light = q('.hero__light');
-      const hadPreloader = !document.documentElement.classList.contains('no-preloader');
       gsap.set(chars, { yPercent: 110 });
       gsap.set(light, { clipPath: 'inset(0 100% 0 0)' });
       gsap.set(fades, { autoAlpha: 0, y: 20 });
@@ -396,12 +397,10 @@ const title = 'LAKSMI';
         tl.to(chars, { yPercent: 0, duration: 1.2, stagger: 0.04 }, 0.15)
           .to(light, { clipPath: 'inset(0 0% 0 0)', duration: 1.2 }, 0.45)
           .to(fades, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.08 }, 0.6);
-        if (!hadPreloader) {
-          // Sin preloader: el yantra llega desde el fondo mientras se traza.
-          tl.set(spin, { visibility: 'visible' }, 0)
-            .fromTo(depth, { z: -2200 }, { z: DEPTH.z, duration: 2.2, ease: 'expo.out' }, 0)
-            .fromTo(spin.querySelectorAll('.y-draw'), { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.6, ease: 'power2.inOut', stagger: 0.004 }, 0);
-        }
+        // Ya dentro del portal, el yantra del hero llega desde el fondo mientras se traza.
+        tl.set(spin, { visibility: 'visible' }, 0)
+          .fromTo(depth, { z: -2200 }, { z: DEPTH.z, duration: 2.4, ease: 'expo.out' }, 0.2)
+          .fromTo(spin.querySelectorAll('.y-draw'), { drawSVG: '0%' }, { drawSVG: '100%', duration: 1.8, ease: 'power2.inOut', stagger: 0.004 }, 0.2);
       });
     }
 

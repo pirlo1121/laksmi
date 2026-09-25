@@ -1,16 +1,23 @@
 ---
 import Yantra from './Yantra.astro';
+import { PORTAL } from '../data/yantra';
+
+// Tapa negra con el hueco del portal (el marco interior del yantra). Se sale del SVG
+// (overflow visible) para cubrir toda la pantalla, y escala junto con el yantra.
+const FAR = 20000;
+const COVER = `M ${-FAR} ${-FAR} H ${FAR} V ${FAR} H ${-FAR} Z ${PORTAL}`;
 ---
 
 <div class="preloader" data-preloader aria-hidden="true">
-  <div class="preloader__inner">
-    <Yantra class="preloader__yantra" />
-    <p class="preloader__text">Bienvenidos</p>
-  </div>
+  <Yantra class="preloader__yantra">
+    <path class="portal-cover" d={COVER} fill-rule="evenodd"></path>
+    <path class="portal-veil" d={PORTAL}></path>
+  </Yantra>
+  <p class="preloader__text">Bienvenidos</p>
 </div>
 
 <style>
-  /* Solo existe con JS, sin reduced-motion y en la primera visita de la sesión. */
+  /* Solo existe con JS y sin reduced-motion. */
   .preloader {
     display: none;
   }
@@ -18,26 +25,35 @@ import Yantra from './Yantra.astro';
     position: fixed;
     inset: 0;
     z-index: 950;
-    display: grid;
-    place-items: center;
+    display: block;
+    overflow: hidden;
     background: var(--ink);
     /* Salvavidas: si el JS falla, el preloader se va solo. */
-    animation: preloader-failsafe 0.4s 5s forwards;
-  }
-  .preloader__inner {
-    display: grid;
-    justify-items: center;
-    gap: 28px;
+    animation: preloader-failsafe 0.4s 6s forwards;
   }
   .preloader :global(.preloader__yantra) {
-    width: 200px;
-    height: 200px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(220px, 46vw);
+    height: min(220px, 46vw);
+    translate: -50% -50%;
     color: var(--sand);
     visibility: hidden; /* GSAP lo muestra cuando empieza a trazar */
     --yantra-stroke: 1.5px;
   }
+  .portal-cover,
+  .portal-veil {
+    fill: var(--ink);
+    stroke: none;
+  }
   .preloader__text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(50% + min(110px, 23vw) + 32px);
     margin: 0;
+    text-align: center;
     font-family: var(--font-body);
     font-weight: 500;
     font-size: 11px;
@@ -45,12 +61,6 @@ import Yantra from './Yantra.astro';
     text-transform: uppercase;
     color: var(--text);
     opacity: 0;
-  }
-  @media (max-width: 767px) {
-    .preloader :global(.preloader__yantra) {
-      width: 120px;
-      height: 120px;
-    }
   }
   @keyframes preloader-failsafe {
     to {
@@ -63,6 +73,7 @@ import Yantra from './Yantra.astro';
 <script>
   import { finishIntro, loadGsap, lockScroll } from '../animations/setup';
   import { PRELOADER } from '../animations/constants';
+  import { PORTAL_INSET, VIEWBOX } from '../data/yantra';
 
   const root = document.querySelector<HTMLElement>('[data-preloader]');
   const active = root && getComputedStyle(root).display !== 'none';
@@ -71,6 +82,9 @@ import Yantra from './Yantra.astro';
     root?.remove();
     finishIntro();
   } else {
+    // La entrada ocurre en el hero: arrancar siempre desde arriba.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    if (!location.hash) window.scrollTo(0, 0);
     lockScroll(true);
     void run(root);
   }
@@ -79,8 +93,9 @@ import Yantra from './Yantra.astro';
   function assetsReady() {
     const img = document.querySelector<HTMLImageElement>('[data-hero-img]');
     const imgReady = img && !img.complete ? new Promise((r) => img.addEventListener('load', r, { once: true })) : null;
+    const decoded = imgReady?.then(() => img?.decode?.().catch(() => {}));
     return Promise.race([
-      Promise.all([document.fonts?.ready, imgReady]),
+      Promise.all([document.fonts?.ready, decoded]),
       new Promise((r) => setTimeout(r, PRELOADER.maxWait * 1000)),
     ]);
   }
@@ -90,9 +105,12 @@ import Yantra from './Yantra.astro';
     const { gsap } = await loadGsap();
     root.style.animation = 'none'; // desactiva el salvavidas CSS
     const svg = root.querySelector<SVGSVGElement>('.preloader__yantra')!;
+    const scene = svg.querySelector<SVGGElement>('.y-scene')!;
+    const veil = svg.querySelector('.portal-veil');
     const text = root.querySelector('.preloader__text');
     const gates = svg.querySelectorAll('.y-gate .y-draw');
     const core = svg.querySelectorAll('.y-core .y-draw');
+    const media = document.querySelector<HTMLElement>('[data-hero-media]');
 
     gsap.set([gates, core], { drawSVG: '0%' });
     gsap.set(svg, { visibility: 'visible' });
@@ -100,43 +118,41 @@ import Yantra from './Yantra.astro';
     // 0.0s el yantra se traza: primero las puertas, luego el centro.
     const draw = gsap.timeline();
     draw
-      .to(gates, { drawSVG: '100%', duration: 0.55, ease: 'power2.inOut', stagger: 0.02 })
-      .to(core, { drawSVG: '100%', duration: 0.5, ease: 'power2.inOut', stagger: 0.012 }, 0.3)
+      .to(gates, { drawSVG: '100%', duration: 0.6, ease: 'power2.inOut', stagger: 0.02 })
+      .to(core, { drawSVG: '100%', duration: 0.55, ease: 'power2.inOut', stagger: 0.012 }, 0.3)
       .to(text, { opacity: 1, duration: 0.4 }, 0.9);
 
-    await Promise.all([draw.then(), ready, new Promise((r) => setTimeout(r, 1000))]);
+    await Promise.all([draw.then(), ready, new Promise((r) => setTimeout(r, 1100))]);
 
-    // FLIP: el yantra del preloader viaja al lugar del yantra del hero y se convierte en él.
-    const target = document.querySelector<SVGSVGElement>('[data-hero-yantra]');
-    const from = svg.getBoundingClientRect();
+    // La tapa del SVG ya cubre la pantalla: el fondo del contenedor sobra y taparía el hueco.
+    root.style.background = 'transparent';
+
+    // Escala a la que el hueco del portal (su lado más corto) ya cubre la diagonal de la pantalla.
+    const px = svg.getBoundingClientRect().width / VIEWBOX;
+    const scale = (Math.hypot(window.innerWidth, window.innerHeight) / 2 / (PORTAL_INSET * px)) * 1.08;
+
     const exit = gsap.timeline({
       onComplete: () => {
         root.remove();
         lockScroll(false);
       },
     });
-    finishIntro();
 
-    if (target) {
-      // El yantra del hero es un plano inclinado en profundidad: el del preloader viaja a su lugar
-      // aplastándose en vertical (como si se acostara) y se funde con él.
-      const root = target.closest<HTMLElement>('[data-hero-yantra-root]') ?? target;
-      const to = target.getBoundingClientRect();
-      exit.to(svg, {
-        x: to.left + to.width / 2 - (from.left + from.width / 2),
-        y: to.top + to.height / 2 - (from.top + from.height / 2),
-        scaleX: to.width / from.width,
-        scaleY: to.height / from.height,
-        duration: 1.1,
-        ease: 'expo.inOut',
-      });
-      exit.set(root, { visibility: 'visible' }, 0.75);
-      exit.from([...root.children], { opacity: 0, duration: 0.5, ease: 'power1.out', immediateRender: false }, 0.75);
-      exit.to(svg, { opacity: 0, duration: 0.4 }, 0.8);
-    }
+    // 1) El portal se abre: Bogotá aparece al fondo, dentro del marco.
+    if (media) exit.set(media, { scale: 1.6, transformOrigin: '50% 55%' }, 0);
     exit
-      .to(text, { opacity: 0, duration: 0.3 }, 0)
-      .to(root, { backgroundColor: 'rgba(10,14,21,0)', duration: 0.9, ease: 'power2.inOut' }, 0.15)
-      .set(svg, { autoAlpha: 0 });
+      .to(text, { opacity: 0, y: 8, duration: 0.4, ease: 'power2.in' }, 0)
+      .to(veil, { opacity: 0, duration: 0.9, ease: 'power2.out' }, 0.05)
+      .to(core, { opacity: 0.35, duration: 0.9, ease: 'power2.out' }, 0.05)
+      .to(gates, { strokeWidth: 2, duration: 0.6 }, 0.05);
+
+    // 2) Entramos: el yantra crece hasta que el marco queda fuera de cuadro; la ciudad se acerca.
+    exit
+      .to(scene, { scale, svgOrigin: '0 0', duration: 1.7, ease: 'expo.inOut' }, 0.8)
+      .to(core, { opacity: 0, duration: 0.6, ease: 'power1.in' }, 0.9);
+    if (media) exit.to(media, { scale: 1, duration: 2.1, ease: 'expo.inOut', clearProps: 'transform' }, 0.7);
+
+    // 3) Ya adentro: el hero presenta título y lema.
+    exit.call(finishIntro, [], 1.75);
   }
 </script>

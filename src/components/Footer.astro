@@ -61,6 +61,11 @@ const year = new Date().getFullYear();
         <!-- [PENDIENTE] página de términos -->
         <span class="dim">Términos (próximamente)</span>
       </nav>
+      <small class="footer__credit">
+        Foto de Bogotá: Dan Gold ·
+        <a href="https://commons.wikimedia.org/wiki/File:Dan-gold-bogota-city-night-montserrate.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>
+        · <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-SA 4.0</a>
+      </small>
     </div>
   </div>
 </footer>
@@ -131,6 +136,12 @@ const year = new Date().getFullYear();
     padding: 0;
     list-style: none;
     font-size: 14px;
+  }
+  .footer__credit {
+    flex-basis: 100%;
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.7;
   }
   .footer__base {
     display: flex;
