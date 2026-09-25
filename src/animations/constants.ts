@@ -8,17 +8,10 @@ export const EASE = {
 
 export const DUR = { fast: 0.5, base: 0.9, slow: 1.4 } as const;
 
-export const SCROLL = {
-  areasPerStep: 100, // vh de scroll por cada área (desktop)
-} as const;
-
 export const BP = {
   mobile: '(max-width: 767px)',
   desktop: '(min-width: 768px)',
 } as const;
-
-/** Las áreas solo se fijan si hay alto suficiente para leer una área completa. */
-export const AREAS_MIN_HEIGHT = '(min-height: 640px)';
 
 export const PRELOADER = {
   maxWait: 2.5, // s: tope de espera por fuentes + imagen del hero

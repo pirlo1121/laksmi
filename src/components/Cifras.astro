@@ -18,6 +18,7 @@ import { cifras } from '../data/site';
             >
               {c.texto ?? `${c.prefijo}${c.valor}`}
             </strong>
+            <span class="cifras__bar" aria-hidden="true" />
             <span class="label cifras__label">{c.etiqueta}</span>
           </li>
         ))
@@ -90,6 +91,34 @@ import { cifras } from '../data/site';
     font-size: 5.4vw; /* GRATIS es una palabra larga: mantiene la línea base de la fila */
     line-height: 1.2;
   }
+  /* Odómetro: cada dígito es una columna 0–9 que gira hasta su valor. */
+  .cifras__num :global(.odo) {
+    display: inline-flex;
+    align-items: flex-start;
+  }
+  .cifras__num :global(.odo__digit) {
+    display: inline-block;
+    height: 1em;
+    overflow: hidden;
+  }
+  .cifras__num :global(.odo__col) {
+    display: flex;
+    flex-direction: column;
+  }
+  .cifras__num :global(.odo__col > span) {
+    height: 1em;
+    line-height: 1;
+  }
+  .cifras__num.is-odo {
+    line-height: 1;
+  }
+  .cifras__bar {
+    display: block;
+    width: 56px;
+    height: 2px;
+    background: var(--sand);
+    transform-origin: left;
+  }
   .cifras__label {
     max-width: 14ch;
   }
@@ -124,42 +153,80 @@ import { cifras } from '../data/site';
 
   const root = document.querySelector<HTMLElement>('[data-cifras]')!;
 
-  scene(2, ({ gsap, c }) => {
-    if (c.reduce) return; // valores finales, sin contar
+  /** Construye el odómetro de un número: prefijo fijo + una columna giratoria por dígito. */
+  function buildOdometer(el: HTMLElement) {
+    const end = el.dataset.count!;
+    const prefix = el.dataset.prefix === '+' ? '+' : '';
+    const digits = el.dataset.prefix === '0' ? end.padStart(2, '0') : end;
+    const text = `${prefix}${digits}`;
+    el.textContent = '';
+    el.classList.add('is-odo');
+    const sr = document.createElement('span');
+    sr.className = 'sr-only';
+    sr.textContent = text;
+    const odo = document.createElement('span');
+    odo.className = 'odo';
+    odo.setAttribute('aria-hidden', 'true');
+    if (prefix) odo.append(Object.assign(document.createElement('span'), { textContent: prefix, className: 'odo__prefix' }));
+    const cols = [...digits].map((d, i) => {
+      // Da una vuelta completa (más vueltas cuanto más a la derecha) y se detiene en su dígito.
+      const laps = 1 + i;
+      const seq = [...Array.from({ length: laps * 10 }, (_, k) => k % 10), Number(d)];
+      const box = document.createElement('span');
+      box.className = 'odo__digit';
+      const col = document.createElement('span');
+      col.className = 'odo__col';
+      seq.forEach((n) => col.append(Object.assign(document.createElement('span'), { textContent: String(n) })));
+      box.append(col);
+      odo.append(box);
+      return { col, steps: seq.length - 1, total: seq.length };
+    });
+    el.append(sr, odo);
+    return cols;
+  }
 
-    const trigger = { trigger: root, start: 'top 75%', once: true };
-    const tl = gsap.timeline({ scrollTrigger: trigger });
+  scene(2, ({ gsap, c }) => {
+    if (c.reduce) return; // valores finales, sin animar
+
+    const tl = gsap.timeline({ scrollTrigger: { trigger: root, start: 'top 78%', once: true } });
 
     tl.from(root.querySelector('.cifras__rule'), { scaleX: 0, duration: DUR.slow, ease: EASE.enter }, 0);
-    tl.from(root.querySelectorAll('.cifras__line'), { scaleY: 0, duration: 0.8, ease: EASE.heavy, stagger: 0.1 }, 0.1);
+    tl.from(root.querySelectorAll('.cifras__line'), { scaleY: 0, duration: 0.9, ease: EASE.heavy, stagger: 0.1 }, 0.1);
 
-    root.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
-      const end = Number(el.dataset.count);
-      const prefix = el.dataset.prefix ?? '';
-      const pad = prefix === '0';
-      const n = { v: 0 };
-      el.textContent = pad ? '00' : `${prefix}0`;
-      tl.to(
-        n,
-        {
-          v: end,
-          duration: DUR.slow,
-          ease: 'power2.out',
-          onUpdate: () => {
-            const v = Math.round(n.v);
-            el.textContent = pad ? String(v).padStart(2, '0') : `${prefix}${v}`;
-          },
-        },
-        0.3,
-      );
+    const cells = [...root.querySelectorAll<HTMLElement>('.cifras__cell')];
+    cells.forEach((cell, i) => {
+      const at = 0.25 + i * 0.14;
+      const num = cell.querySelector<HTMLElement>('.cifras__num')!;
+      const bar = cell.querySelector('.cifras__bar');
+      const label = cell.querySelector('.cifras__label');
+
+      // La celda sube desde su máscara.
+      tl.from(num, { yPercent: 40, autoAlpha: 0, duration: 0.8, ease: EASE.heavy }, at);
+
+      if (num.dataset.count) {
+        const cols = buildOdometer(num);
+        cols.forEach(({ col, steps, total }, j) => {
+          tl.fromTo(
+            col,
+            { yPercent: 0 },
+            { yPercent: (-steps / total) * 100, duration: 1.5 + j * 0.35, ease: 'expo.out' },
+            at + 0.05,
+          );
+        });
+      } else {
+        // GRATIS: las letras caen girando en 3D, una tras otra.
+        const chars = split(num, 'chars', 'cifras__char');
+        gsap.set(num, { perspective: 600 });
+        tl.from(
+          chars,
+          { yPercent: 100, rotationX: -90, transformOrigin: '50% 100%', duration: 1, ease: EASE.enter, stagger: 0.06 },
+          at + 0.05,
+        );
+      }
+
+      // Barra Sand que se llena mientras el número gira.
+      tl.from(bar, { scaleX: 0, duration: 1.6, ease: 'expo.out' }, at + 0.1);
+      tl.from(label, { y: 16, autoAlpha: 0, duration: DUR.base, ease: EASE.heavy }, at + 0.3);
     });
-
-    const gratis = root.querySelector<HTMLElement>('[data-text]');
-    if (gratis) {
-      const chars = split(gratis, 'chars', 'cifras__char');
-      tl.from(chars, { yPercent: 110, duration: DUR.base, ease: EASE.enter, stagger: 0.05 }, 0.4);
-    }
-
-    tl.from(root.querySelectorAll('.cifras__label'), { y: 20, autoAlpha: 0, duration: DUR.base, ease: EASE.heavy, stagger: 0.08 }, 0.5);
   });
 </script>

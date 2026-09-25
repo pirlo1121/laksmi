@@ -118,16 +118,21 @@ import Yantra from './Yantra.astro';
     finishIntro();
 
     if (target) {
+      // El yantra del hero es un plano inclinado en profundidad: el del preloader viaja a su lugar
+      // aplastándose en vertical (como si se acostara) y se funde con él.
+      const root = target.closest<HTMLElement>('[data-hero-yantra-root]') ?? target;
       const to = target.getBoundingClientRect();
       exit.to(svg, {
         x: to.left + to.width / 2 - (from.left + from.width / 2),
         y: to.top + to.height / 2 - (from.top + from.height / 2),
-        scale: to.width / from.width,
-        opacity: 0.9,
+        scaleX: to.width / from.width,
+        scaleY: to.height / from.height,
         duration: 1.1,
         ease: 'expo.inOut',
       });
-      exit.set(target, { autoAlpha: 0.9 });
+      exit.set(root, { visibility: 'visible' }, 0.75);
+      exit.from([...root.children], { opacity: 0, duration: 0.5, ease: 'power1.out', immediateRender: false }, 0.75);
+      exit.to(svg, { opacity: 0, duration: 0.4 }, 0.8);
     }
     exit
       .to(text, { opacity: 0, duration: 0.3 }, 0)

@@ -8,7 +8,7 @@
 import type { gsap as GsapT } from 'gsap';
 import type { ScrollTrigger as ScrollTriggerT } from 'gsap/ScrollTrigger';
 import type Lenis from 'lenis';
-import { AREAS_MIN_HEIGHT, BP } from './constants';
+import { BP } from './constants';
 
 export type Gsap = typeof GsapT;
 export type ST = typeof ScrollTriggerT;
@@ -17,7 +17,6 @@ export interface Conditions {
   desktop: boolean;
   mobile: boolean;
   reduce: boolean;
-  tall: boolean;
 }
 
 export interface SceneApi {
@@ -82,6 +81,12 @@ export function scrollToY(y: number) {
   else window.scrollTo({ top: y, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
 }
 
+/** Desplaza al instante (sin suavizado); útil para compensar cambios de altura. */
+export function scrollByNow(dy: number) {
+  if (lenis) lenis.scrollTo(lenis.scroll + dy, { immediate: true, force: true });
+  else window.scrollBy(0, dy);
+}
+
 export function scrollToHash(hash: string) {
   const resolved = anchorResolvers.get(hash)?.();
   if (resolved != null) return scrollToY(resolved);
@@ -127,7 +132,6 @@ async function start() {
       desktop: `${BP.desktop} and (prefers-reduced-motion: no-preference)`,
       mobile: `${BP.mobile} and (prefers-reduced-motion: no-preference)`,
       reduce: '(prefers-reduced-motion: reduce)',
-      tall: AREAS_MIN_HEIGHT,
     },
     (ctx) => {
       const c = ctx.conditions as unknown as Conditions;
