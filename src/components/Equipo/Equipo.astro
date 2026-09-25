@@ -21,7 +21,7 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
         loop
         playsinline
         preload="none"
-        poster={posterImg.src}
+        data-poster={posterImg.src}
         width="1280"
         height="720"
         data-equipo-video
@@ -345,6 +345,16 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
   // Caja del yantra luminoso dentro del cuadro del video (fracciones del ancho/alto).
   const YANTRA_BOX = { x0: 0.345, x1: 0.65, y0: 0.17, y1: 0.7 };
   const video = root.querySelector<HTMLVideoElement>('[data-equipo-video]')!;
+  // El póster (primer cuadro) se pide cuando la sección se acerca, no al cargar la página:
+  // así no compite con la imagen del hero.
+  new IntersectionObserver(
+    ([entry], obs) => {
+      if (!entry.isIntersecting) return;
+      video.poster = video.dataset.poster!;
+      obs.disconnect();
+    },
+    { rootMargin: '150% 0px' },
+  ).observe(video);
   if (!prefersReducedMotion()) {
     new IntersectionObserver(
       ([entry]) => {
@@ -490,5 +500,5 @@ const conBio = equipo.filter((m) => m.bio.length > 0);
       delay: 0.3,
       scrollTrigger: { trigger: root.querySelector('.equipo__grid'), start: 'top 80%', once: true },
     });
-  });
+  }, root);
 </script>

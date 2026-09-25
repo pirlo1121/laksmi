@@ -309,5 +309,5 @@ import Yantra from './Yantra.astro';
     const tl = gsap.timeline({ scrollTrigger: { trigger: root.querySelector('[data-ss-cards]'), start: 'top 85%', once: true } });
     tl.from(cards, { y: 60, autoAlpha: 0, duration: DUR.base, ease: EASE.heavy, stagger: 0.1, clearProps: 'transform' }, 0);
     tl.from(root.querySelectorAll('.card__rule'), { scaleX: 0, duration: DUR.slow, ease: EASE.enter, stagger: 0.1 }, 0.3);
-  });
+  }, root);
 </script>

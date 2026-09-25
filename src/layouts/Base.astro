@@ -1,4 +1,5 @@
 ---
+import { Font } from 'astro:assets';
 import '../styles/global.css';
 import { seo, site } from '../data/site';
 
@@ -30,12 +31,10 @@ const canonical = new URL(Astro.url.pathname, site.url);
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Red+Hat+Display:ital,wght@0,700;0,800;0,900;1,300&display=swap"
-    />
+    <!-- Fuentes autoalojadas (astro.config.mjs). Se precargan las que usa el primer pantallazo:
+         Manrope y Red Hat Display normal; la itálica llega cuando se necesita. -->
+    <Font cssVariable="--font-manrope" preload />
+    <Font cssVariable="--font-red-hat" preload={[{ style: 'normal' }]} />
     {preloadHero && <link rel="preload" as="image" href={preloadHero} fetchpriority="high" />}
 
     <!-- Antes del primer pintado: marca que hay JS y decide si se muestra el preloader (portal). -->

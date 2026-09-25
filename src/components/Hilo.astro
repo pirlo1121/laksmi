@@ -198,8 +198,13 @@
     ScrollTrigger.addEventListener('refresh', measureLumen);
 
     // Si cambia el alto de la página (imágenes, fuentes, paneles), se vuelve a medir.
+    // Solo el alto: los cambios de ancho ya los cubre el resize de ScrollTrigger.
     let t = 0;
-    const ro = new ResizeObserver(() => {
+    let lastH = document.body.offsetHeight;
+    const ro = new ResizeObserver(([entry]) => {
+      const h = Math.round(entry.contentRect.height);
+      if (Math.abs(h - lastH) < 2) return;
+      lastH = h;
       clearTimeout(t);
       t = window.setTimeout(() => ScrollTrigger.refresh(), 200);
     });

@@ -18,8 +18,9 @@
   --sand: var(--brand-sand);
 
   /* Tipografía */
-  --font-display: 'Red Hat Display', system-ui, sans-serif;
-  --font-body: 'Manrope', system-ui, sans-serif;
+  /* Definidas por <Font /> en Base.astro (autoalojadas, con fallbacks ajustados). */
+  --font-display: var(--font-red-hat, 'Red Hat Display', system-ui, sans-serif);
+  --font-body: var(--font-manrope, 'Manrope', system-ui, sans-serif);
 
   /* Layout */
   --gutter: clamp(1rem, 4vw, 3.5rem);

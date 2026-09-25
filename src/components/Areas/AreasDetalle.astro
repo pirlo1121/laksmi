@@ -333,5 +333,5 @@ const pad = (n: number) => String(n).padStart(2, '0');
         .from(el.querySelectorAll('.chap__title .line, .chap__title .light'), { autoAlpha: 0, y: 24, duration: 0.8, stagger: 0.08 }, 0.35)
         .from(el.querySelectorAll('[data-chap-item]'), { autoAlpha: 0, y: 14, duration: 0.5, stagger: 0.03 }, 0.5);
     });
-  });
+  }, root);
 </script>

@@ -181,7 +181,7 @@ button {
 /* Textura: grano + viñeta, fijos sobre todo. */
 .grain {
   position: fixed;
-  inset: -50%;
+  inset: 0; /* estático y en mosaico: del tamaño de la pantalla basta (antes cubría 4× el área) */
   z-index: 900;
   pointer-events: none;
   opacity: 0.06;

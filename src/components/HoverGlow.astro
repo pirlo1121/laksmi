@@ -91,5 +91,8 @@
     });
   }
 
-  document.querySelectorAll<HTMLElement>(SELECTOR).forEach(attach);
+  // No hace falta al arrancar: se prepara en tiempo ocioso para no sumar al montaje inicial.
+  const init = () => document.querySelectorAll<HTMLElement>(SELECTOR).forEach(attach);
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(init, { timeout: 2000 });
+  else setTimeout(init, 300);
 </script>

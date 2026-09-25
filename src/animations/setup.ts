@@ -1,9 +1,12 @@
 /**
  * Orquestador de animaciones.
  * - Carga GSAP, ScrollTrigger, DrawSVG y Lenis con import dinámico (el HTML ya es visible sin JS).
- * - Cada sección registra su escena con `scene(orden, fn)` desde su propio <script>.
+ * - Cada sección registra su escena con `scene(orden, fn, raíz?)` desde su propio <script>.
  * - Todas las escenas corren dentro de un único gsap.matchMedia() con tres contextos
- *   (desktop, mobile, reduce), en orden de página para que los pins se calculen bien.
+ *   (desktop, mobile, reduce), en orden de página.
+ * - Las escenas con `raíz` se montan tarde: cuando su sección está a ~1,5 pantallas o, si no, en
+ *   tiempo ocioso después de la intro. Así el arranque no bloquea el hilo principal mientras corre
+ *   el preloader (en un móvil medio, montar todo de una vez eran ~0,5 s de bloqueo).
  */
 import type { gsap as GsapT } from 'gsap';
 import type { ScrollTrigger as ScrollTriggerT } from 'gsap/ScrollTrigger';
@@ -27,12 +30,22 @@ export interface SceneApi {
 
 type SceneFn = (api: SceneApi) => void | (() => void);
 
-const scenes: { order: number; fn: SceneFn }[] = [];
+const scenes: { order: number; fn: SceneFn; root?: Element | null }[] = [];
 
-/** Registra la animación de una sección. `order` = posición en la página. */
-export function scene(order: number, fn: SceneFn) {
-  scenes.push({ order, fn });
+/**
+ * Registra la animación de una sección. `order` = posición en la página.
+ * Con `root`, la escena se monta cuando esa sección se acerca a la pantalla (o en tiempo ocioso).
+ * Sin `root`, se monta al arrancar (lo que se ve de entrada: nav, hero, hilo).
+ */
+export function scene(order: number, fn: SceneFn, root?: Element | null) {
+  scenes.push({ order, fn, root });
 }
+
+/** requestIdleCallback con respaldo para Safari. */
+const idle = (cb: () => void) => {
+  if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(cb, { timeout: 1200 });
+  else setTimeout(cb, 60);
+};
 
 let libs: Promise<{ gsap: Gsap; ScrollTrigger: ST }> | null = null;
 
@@ -135,8 +148,49 @@ async function start() {
     },
     (ctx) => {
       const c = ctx.conditions as unknown as Conditions;
-      const cleanups = scenes.map(({ fn }) => fn({ gsap, ScrollTrigger, c }));
-      return () => cleanups.forEach((fn) => typeof fn === 'function' && fn());
+      const cleanups: (() => void)[] = [];
+      let alive = true;
+      // ctx.add: lo que se crea después sigue perteneciendo a este contexto (se revierte al cambiar de breakpoint).
+      const mount = (fn: SceneFn) =>
+        ctx.add(() => {
+          const cleanup = fn({ gsap, ScrollTrigger, c });
+          if (typeof cleanup === 'function') cleanups.push(cleanup);
+        });
+
+      // Diferidas, en orden de página.
+      const pending = new Map<Element, SceneFn>();
+      for (const s of scenes) {
+        if (s.root) pending.set(s.root, s.fn);
+        else mount(s.fn);
+      }
+      const mountRoot = (root: Element) => {
+        const fn = pending.get(root);
+        if (!fn || !alive) return;
+        pending.delete(root);
+        io.unobserve(root);
+        mount(fn);
+      };
+      const io = new IntersectionObserver(
+        (entries) => entries.forEach((e) => e.isIntersecting && mountRoot(e.target)),
+        { rootMargin: '150% 0px' },
+      );
+      pending.forEach((_, root) => io.observe(root));
+      // Lo que aún no se acercó se monta de a una escena por hueco ocioso, cuando termina la intro.
+      introDone.then(() => {
+        const next = () => {
+          const root = pending.keys().next().value;
+          if (!root || !alive) return;
+          mountRoot(root);
+          idle(next);
+        };
+        idle(next);
+      });
+
+      return () => {
+        alive = false;
+        io.disconnect();
+        cleanups.forEach((fn) => fn());
+      };
     },
   );
 

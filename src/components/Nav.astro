@@ -69,6 +69,14 @@ import { contacto, nav } from '../data/site';
     -webkit-backdrop-filter: blur(8px);
     border-bottom-color: var(--line);
   }
+  /* Táctil: el desenfoque se recalcula en cada cuadro del scroll; un fondo casi opaco se ve igual y cuesta nada. */
+  @media (pointer: coarse) {
+    .nav.is-scrolled {
+      background: rgba(10, 14, 21, 0.94);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+  }
   .nav__bar {
     height: 100%;
     display: flex;
@@ -237,9 +245,7 @@ import { contacto, nav } from '../data/site';
       onUpdate: (self) => {
         if (!menu.hidden) return;
         // Se oculta al bajar y reaparece al subir.
-        const hide = self.direction === 1 && self.scroll() > 240;
-        show(hide ? -100 : 0);
-        document.documentElement.classList.toggle('nav-hidden', hide);
+        show(self.direction === 1 && self.scroll() > 240 ? -100 : 0);
       },
       onToggle: (self) => header.classList.toggle('is-scrolled', self.isActive),
     });
