@@ -378,6 +378,11 @@ const lit = puertas(inicial);
     border-color: rgba(241, 209, 152, 0.3);
   }
 
+  .ss__stage.is-instant,
+  .ss__stage.is-instant :global(*) {
+    transition: none !important;
+  }
+
   .ss__foot {
     display: flex;
     justify-content: flex-end;

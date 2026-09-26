@@ -82,7 +82,9 @@ scene(4, ({ gsap, ScrollTrigger, c }) => {
 
   // El paquete en foco (el que cruza el 60 % de la pantalla) enciende sus puertas.
   // Un solo trigger: el tramo de la lista se reparte entre los paquetes. Nada corre por cuadro.
-  stage.classList.add('is-live');
+  // El primer estado se aplica sin transiciones: la sección aún está fuera de pantalla y animar ~30
+  // colores, bordes y puertas (nada de eso va al compositor) solo cargaba el hilo principal al montar.
+  stage.classList.add('is-instant', 'is-live');
   const pick = (p: number) => setActive(Math.min(cards.length - 1, Math.floor(p * cards.length)));
   const st = ScrollTrigger.create({
     trigger: list,
@@ -92,6 +94,7 @@ scene(4, ({ gsap, ScrollTrigger, c }) => {
     onRefresh: (self) => pick(self.progress),
   });
   pick(st.progress);
+  requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.remove('is-instant')));
 
   return () => stage.classList.remove('is-live');
 }, root);

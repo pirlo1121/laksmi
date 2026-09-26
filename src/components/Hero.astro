@@ -196,19 +196,32 @@ const SIZES_TALL = '63vh';
     border-color: var(--sand);
   }
   .hero__dot {
+    position: relative;
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: var(--sand);
-    box-shadow: 0 0 0 0 rgba(241, 209, 152, 0.6);
+  }
+  /* El pulso es un anillo que crece y se desvanece: solo transform y opacity (compositor).
+     Antes animaba box-shadow, que repinta en el hilo principal en cada cuadro mientras el hero se ve. */
+  .hero__dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--sand);
+    opacity: 0;
     animation: pulse 2s infinite;
   }
   @keyframes pulse {
-    70% {
-      box-shadow: 0 0 0 10px rgba(241, 209, 152, 0);
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
     }
+    70%,
     100% {
-      box-shadow: 0 0 0 0 rgba(241, 209, 152, 0);
+      transform: scale(3.5);
+      opacity: 0;
     }
   }
   .hero__cue {
@@ -228,28 +241,23 @@ const SIZES_TALL = '63vh';
     background: var(--line);
     overflow: hidden;
   }
+  /* La línea entra por arriba y sale por abajo dentro de su recorte. Con translate se ve igual que
+     el scaleY anterior, pero sin cambiar transform-origin en los keyframes (eso la sacaba del compositor). */
   .hero__cue-line span {
     position: absolute;
     inset: 0;
     background: var(--sand);
-    transform-origin: top;
     animation: cue 2.2s var(--ease-out) infinite;
   }
   @keyframes cue {
     0% {
-      transform: scaleY(0);
-      transform-origin: top;
+      transform: translateY(-100%);
     }
     50% {
-      transform: scaleY(1);
-      transform-origin: top;
-    }
-    51% {
-      transform-origin: bottom;
+      transform: translateY(0);
     }
     100% {
-      transform: scaleY(0);
-      transform-origin: bottom;
+      transform: translateY(100%);
     }
   }
 

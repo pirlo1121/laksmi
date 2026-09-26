@@ -5,6 +5,10 @@ import { split } from '../animations/reveal';
 
 const root = document.querySelector<HTMLElement>('[data-cifras]')!;
 
+// El latido de la chispa solo corre mientras está en pantalla (ver Cifras.astro).
+const spark = root.querySelector<HTMLElement>('.firma__spark')!;
+new IntersectionObserver(([e]) => spark.classList.toggle('is-on', e.isIntersecting)).observe(spark);
+
 /** Construye el odómetro de un número: prefijo fijo + una columna giratoria por dígito. */
 function buildOdometer(el: HTMLElement) {
   const end = el.dataset.count!;

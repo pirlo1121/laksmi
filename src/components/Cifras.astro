@@ -47,9 +47,18 @@ import { cifras, site } from '../data/site';
     height: 90px;
     margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
   }
+  /* La entrada (GSAP) escala el contenedor; el latido va en ::before para no pelear por transform.
+     El latido corre solo con la chispa en pantalla (.is-on, desde cifras.ts): mientras estaba oculta,
+     Chrome no podía llevarlo al compositor y lo recalculaba en el hilo principal a 60 fps. */
   .firma__spark {
+    position: relative;
     width: 90px;
     height: 90px;
+  }
+  .firma__spark::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     border-radius: 50%;
     background: radial-gradient(
       circle,
@@ -59,6 +68,9 @@ import { cifras, site } from '../data/site';
       transparent 70%
     );
     animation: firma-spark 3.2s ease-in-out infinite;
+  }
+  :global(html.js) .firma__spark:not(.is-on)::before {
+    animation-play-state: paused;
   }
   @keyframes firma-spark {
     50% {
