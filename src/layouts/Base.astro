@@ -31,10 +31,10 @@ const canonical = new URL(Astro.url.pathname, site.url);
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- Fuentes autoalojadas (astro.config.mjs). Se precargan las que usa el primer pantallazo:
-         Manrope y Red Hat Display normal; la itálica llega cuando se necesita. -->
+    <!-- Fuentes autoalojadas (astro.config.mjs). Se precargan todas: las tres están en el primer
+         pantallazo (la itálica es «Abogados» del hero; si llega tarde, el título salta). -->
     <Font cssVariable="--font-manrope" preload />
-    <Font cssVariable="--font-red-hat" preload={[{ style: 'normal' }]} />
+    <Font cssVariable="--font-red-hat" preload />
     {preloadHero && <link rel="preload" as="image" href={preloadHero} fetchpriority="high" />}
 
     <!-- Antes del primer pintado: marca que hay JS y decide si se muestra el preloader (portal). -->
@@ -42,7 +42,11 @@ const canonical = new URL(Astro.url.pathname, site.url);
       (function () {
         var d = document.documentElement;
         d.classList.add('js');
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('no-preloader');
+        var seen = false;
+        try {
+          seen = sessionStorage.getItem('laksmi-intro') === '1';
+        } catch (e) {}
+        if (seen || window.matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('no-preloader');
       })();
     </script>
   </head>

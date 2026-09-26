@@ -2,6 +2,8 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 export default defineConfig({
   site: 'https://laksmiabogados.com',
+  // CSS en línea: una sola página y ~12 KB comprimidos; ahorra dos peticiones que bloquean el primer pintado.
+  build: { inlineStylesheets: 'always' },
   // Fuentes servidas desde el propio sitio (se descargan en el build): sin CSS externo que bloquee
   // el primer pintado y con fallbacks ajustados a sus métricas para que el texto no salte al cargar.
   // Ambas son variables en Google: un solo archivo por estilo cubre todo el rango de pesos.

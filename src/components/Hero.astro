@@ -1,27 +1,50 @@
 ---
-import { Picture } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import bogota from '../assets/brand/bogota-hd.jpg';
+import bogotaVertical from '../assets/brand/bogota-vertical.jpg';
 import { site } from '../data/site';
 
 // Foto: Dan Gold, «Bogotá city night desde Monserrate» — CC BY-SA 4.0, Wikimedia Commons (original 5506×3098).
+// bogota-vertical.jpg es el mismo encuadre recortado a 5:8 por el centro: lo único que un teléfono
+// vertical muestra de la panorámica. Sin él, el móvil bajaba la panorámica de 2560 px (~235 KB) para
+// ver menos de un tercio. Calidad 45: bajo el velo oscuro del hero (40–95 %) no se distingue de 60.
 const title = 'LAKSMI';
+const Q = 45;
+const VERTICAL = '(max-aspect-ratio: 5/8)';
+const wide = { src: bogota, widths: [640, 960, 1280, 1600, 1920, 2560], quality: Q };
+const tall = { src: bogotaVertical, widths: [480, 720, 960, 1280, 1600], quality: Q };
+const [wideAvif, wideWebp, tallAvif, tallWebp, fallback] = await Promise.all([
+  getImage({ ...wide, format: 'avif' }),
+  getImage({ ...wide, format: 'webp' }),
+  getImage({ ...tall, format: 'avif' }),
+  getImage({ ...tall, format: 'webp' }),
+  getImage({ src: bogota, width: 1920, quality: Q, format: 'jpg' }),
+]);
+// Ancho mostrado: con object-fit cover la imagen se ajusta al alto cuando la pantalla es más angosta que ella.
+const SIZES_WIDE = '(max-aspect-ratio: 16/9) 178vh, 100vw';
+const SIZES_TALL = '63vh';
 ---
 
 <section class="hero" id="top" data-hero aria-labelledby="hero-title">
   <div class="hero__stage">
     <div class="hero__media" aria-hidden="true" data-hero-media>
-      <Picture
-        src={bogota}
-        formats={['avif', 'webp']}
-        widths={[640, 960, 1280, 1600, 1920, 2560]}
-        quality={60}
-        sizes="(max-aspect-ratio: 16/9) 178vh, 100vw"
-        alt=""
-        loading="eager"
-        fetchpriority="high"
-        class="hero__img"
-        data-hero-img
-      />
+      <picture>
+        <source media={VERTICAL} type="image/avif" srcset={tallAvif.srcSet.attribute} sizes={SIZES_TALL} />
+        <source media={VERTICAL} type="image/webp" srcset={tallWebp.srcSet.attribute} sizes={SIZES_TALL} />
+        <source type="image/avif" srcset={wideAvif.srcSet.attribute} sizes={SIZES_WIDE} />
+        <source type="image/webp" srcset={wideWebp.srcSet.attribute} sizes={SIZES_WIDE} />
+        <img
+          src={fallback.src}
+          width="1920"
+          height="1080"
+          alt=""
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
+          class="hero__img"
+          data-hero-img
+        />
+      </picture>
       <div class="hero__overlay"></div>
       <div class="hero__shade"></div>
     </div>
@@ -260,50 +283,4 @@ const title = 'LAKSMI';
   }
 </style>
 
-<script>
-  import { introDone, scene } from '../animations/setup';
-  import { EASE } from '../animations/constants';
-
-  const hero = document.querySelector<HTMLElement>('[data-hero]')!;
-  const q = <T extends Element = HTMLElement>(s: string) => hero.querySelector<T>(s)!;
-  const qa = (s: string) => hero.querySelectorAll<HTMLElement>(s);
-
-  let entrancePlayed = false;
-
-  scene(1, ({ gsap, c }) => {
-    const img = q('.hero__img');
-    const shade = q('.hero__shade');
-    const fades = qa('[data-hero-fade]');
-
-    /* ---- Reduced motion: solo un fade inicial ---- */
-    if (c.reduce) {
-      introDone.then(() => gsap.from(hero, { autoAlpha: 0, duration: 0.3 }));
-      return;
-    }
-
-    /* ---- Entrada (timed), una sola vez ---- */
-    if (!entrancePlayed) {
-      entrancePlayed = true;
-      const chars = qa('.hero__char');
-      const light = q('.hero__light');
-      gsap.set(chars, { yPercent: 110 });
-      gsap.set(light, { clipPath: 'inset(0 100% 0 0)' });
-      gsap.set(fades, { autoAlpha: 0, y: 20 });
-
-      introDone.then(() => {
-        const tl = gsap.timeline({ defaults: { ease: EASE.enter } });
-        tl.to(chars, { yPercent: 0, duration: 1.2, stagger: 0.04 }, 0.15)
-          .to(light, { clipPath: 'inset(0 0% 0 0)', duration: 1.2 }, 0.45)
-          .to(fades, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.08 }, 0.6);
-      });
-    }
-
-    /* ---- Salida: sin pin; la ciudad se acerca y se oscurece ---- */
-    const tl = gsap.timeline({
-      defaults: { ease: EASE.scrub },
-      scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
-    });
-    tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.2 : 1.1 }, 0);
-    tl.fromTo(shade, { opacity: 0 }, { opacity: 0.6 }, 0);
-  });
-</script>
+<!-- Comportamiento: scripts/hero.ts (se importa en pages/index.astro). -->

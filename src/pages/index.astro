@@ -39,6 +39,23 @@ import Cierre from '../components/Cierre.astro';
 </Base>
 
 <script>
+  // Un solo módulo para toda la página: Astro emite un archivo por cada <script> de componente
+  // (eran 15 peticiones antes del primer pintado). Van en el orden del documento.
+  import '../scripts/preloader';
+  import '../scripts/hover-glow';
+  import '../scripts/nav';
+  import '../scripts/hilo';
+  import '../scripts/hero';
+  import '../scripts/cifras';
+  import '../scripts/areas';
+  import '../scripts/areas-detalle';
+  import '../scripts/seguridad-social';
+  import '../scripts/equipo';
+  import '../scripts/testimonios';
+  import '../scripts/cierre';
+  import '../scripts/consulta-form';
+  import '../scripts/contacto';
+  import '../scripts/yantra-progreso';
   // Arranca el orquestador (carga GSAP/Lenis y ejecuta las escenas registradas).
   import '../animations/setup';
 </script>
