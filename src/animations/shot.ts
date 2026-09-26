@@ -1,4 +1,4 @@
-/** Planos del hilo: utilidades compartidas por Historia y Cierre. */
+/** Planos del hilo: utilidades del Cierre. */
 import type { Gsap, ST } from './setup';
 
 export const $ = <T extends Element = SVGElement>(el: Element, s: string) => el.querySelector<T>(s)!;

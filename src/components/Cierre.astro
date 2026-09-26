@@ -6,7 +6,7 @@
 import '../styles/film.css';
 import Yantra from './Yantra.astro';
 
-const recorrido = ['La firma', 'Cuatro áreas', 'El camino', 'El centro', 'Seguridad social', 'El equipo'];
+const recorrido = ['La firma', 'Cuatro áreas', 'Seguridad social', 'El equipo'];
 ---
 
 <section class="cierre" aria-labelledby="cierre-title" data-cierre>
@@ -19,7 +19,7 @@ const recorrido = ['La firma', 'Cuatro áreas', 'El camino', 'El centro', 'Segur
         <path class="v-thread" d="M 0 -170 V 170" data-map-line></path>
         {
           recorrido.map((r, i) => {
-            const y = -170 + i * 68;
+            const y = -170 + (i * 340) / (recorrido.length - 1);
             return (
               <g data-map-stop>
                 <circle class="v-stop" cy={y} r="6" />

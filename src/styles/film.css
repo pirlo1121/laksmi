@@ -1,5 +1,5 @@
 /*
- * Planos del hilo (Historia y Cierre): pantalla completa, dibujo centrado sobre el hilo y texto a un lado.
+ * Planos del hilo (Cierre): pantalla completa, dibujo centrado sobre el hilo y texto a un lado.
  * Globales porque los comparten varios componentes. Sin fondos: el hilo (detrás) se ve a través.
  */
 
@@ -69,87 +69,22 @@
 }
 
 /* ---------- Trazos: finos, sin filtros ---------- */
-.v-faint {
-  stroke: rgba(241, 209, 152, 0.18);
-  stroke-width: 1.2;
-}
-.v-chaos {
-  stroke: rgba(217, 217, 217, 0.4);
-  stroke-width: 1.2;
-  stroke-linejoin: round;
-}
-.v-frag {
-  stroke: rgba(241, 209, 152, 0.45);
-  stroke-width: 1.3;
-  stroke-linecap: round;
-}
-.shot__visual .v-node,
-.shot__visual .v-core,
 .shot__visual .v-stop {
   fill: var(--sand);
 }
-.shot__visual .v-concept,
-.shot__visual .v-map {
-  fill: var(--text);
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
 .shot__visual .v-map {
   fill: var(--text-dim);
+  font-family: var(--font-body);
+  font-weight: 600;
   font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 .v-thread {
   stroke: var(--sand);
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-/* El hilo pasa "por detrás" de los valores: contorno del color del fondo. */
-.shot__visual .v-value {
-  stroke: var(--ink);
-  stroke-width: 8px;
-  paint-order: stroke;
-  fill: var(--sand);
-  font-family: var(--font-display);
-  font-weight: 300;
-  font-style: italic;
-  font-size: 28px;
-}
-.v-plan .v-draw {
-  stroke: rgba(91, 124, 168, 0.4);
-  stroke-width: 1.4;
-}
-.v-line {
-  stroke: rgba(217, 217, 217, 0.6);
-  stroke-width: 1.5;
-}
-.v-line--dim {
-  stroke: rgba(217, 217, 217, 0.25);
-}
-.v-link {
-  stroke: var(--sand);
-  stroke-width: 1.9;
-}
-
-.shot__light {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 60%;
-  aspect-ratio: 1;
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    #fff6e4 0,
-    rgba(241, 209, 152, 0.7) 18%,
-    rgba(241, 209, 152, 0.18) 45%,
-    transparent 70%
-  );
-  pointer-events: none;
 }
 
 /* ---------- Móvil / tablet vertical: dibujo arriba, texto abajo como tarjeta de título ---------- */
@@ -164,9 +99,6 @@
   .shot__visual {
     width: min(78vw, 420px);
     justify-self: center;
-  }
-  .shot__visual--wide {
-    width: min(92vw, 460px);
   }
   .shot__text,
   .shot:not(.shot--right) .shot__text {
