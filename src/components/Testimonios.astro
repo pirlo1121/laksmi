@@ -20,18 +20,22 @@ import { testimonios } from '../data/testimonios';
       <div class="testi__quotes" aria-live="polite" data-testi-live>
         {
           testimonios.map((t, i) => (
-            <figure
+            // Diapositiva del carrusel (patrón WAI-ARIA): el rol va en un <div>, porque <figure> no admite
+            // role="group". Dentro, la cita conserva su semántica: <figure> + <blockquote> + <figcaption>.
+            <div
               class:list={['quote', { 'is-active': i === 0 }]}
               role="group"
               aria-roledescription="testimonio"
               aria-label={`${i + 1} de ${testimonios.length}`}
               data-quote
             >
-              <blockquote class="quote__text" data-quote-text>
-                {t.texto}
-              </blockquote>
-              <figcaption class="quote__author">— {t.autor}</figcaption>
-            </figure>
+              <figure class="quote__figure">
+                <blockquote class="quote__text" data-quote-text>
+                  {t.texto}
+                </blockquote>
+                <figcaption class="quote__author">— {t.autor}</figcaption>
+              </figure>
+            </div>
           ))
         }
       </div>
@@ -106,6 +110,8 @@ import { testimonios } from '../data/testimonios';
   }
   .quote {
     grid-area: 1 / 1;
+  }
+  .quote__figure {
     margin: 0;
     display: flex;
     flex-direction: column;
