@@ -22,11 +22,16 @@ export const paquetes: Paquete[] = [
   },
 ];
 
+/** Cada cobertura es una puerta del yantra (n, e, s, w): el paquete enciende las suyas. */
 export const glosario = [
-  { sigla: 'EPS', significado: 'Salud' },
-  { sigla: 'ARL', significado: 'Riesgos laborales' },
-  { sigla: 'AFP', significado: 'Pensión' },
-  { sigla: 'CCF', significado: 'Caja de compensación' },
-];
+  { sigla: 'EPS', significado: 'Salud', puerta: 'n' },
+  { sigla: 'ARL', significado: 'Riesgos laborales', puerta: 'e' },
+  { sigla: 'AFP', significado: 'Pensión', puerta: 's' },
+  { sigla: 'CCF', significado: 'Caja de compensación', puerta: 'w' },
+] as const;
+
+/** Puertas que enciende un paquete. */
+export const puertas = (p: Paquete) =>
+  glosario.filter((g) => p.siglas.includes(g.sigla)).map((g) => g.puerta);
 
 export const nombrePaquete = (p: Paquete) => p.siglas.join(' + ');

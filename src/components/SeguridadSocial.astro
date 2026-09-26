@@ -1,12 +1,20 @@
 ---
-import { glosario, paquetes } from '../data/paquetes';
+/**
+ * Seguridad social (servicio insignia).
+ * Cada cobertura es una puerta del yantra: EPS (norte), ARL (este), AFP (sur), CCF (oeste).
+ * Al recorrer los paquetes con el scroll, el yantra (fijo a un lado; arriba en móvil) enciende las
+ * puertas del paquete en foco, hasta quedar completo con la cobertura completa.
+ * Sin JS o con reduced-motion: todos los paquetes visibles y el yantra muestra el paquete elegido.
+ */
+import { glosario, paquetes, puertas } from '../data/paquetes';
 import Yantra from './Yantra.astro';
+
+const inicial = paquetes.find((p) => p.destacado) ?? paquetes[0];
+const lit = puertas(inicial);
 ---
 
 <section class="ss" id="paquetes" aria-labelledby="ss-title" data-ss>
-  <div class="ss__bg" aria-hidden="true">
-    <Yantra class="ss__watermark" />
-  </div>
+  <div class="ss__bg" aria-hidden="true"></div>
 
   <div class="container ss__inner">
     <header class="ss__head">
@@ -21,55 +29,65 @@ import Yantra from './Yantra.astro';
       </p>
     </header>
 
-    <fieldset class="ss__cards" data-ss-cards>
-      <legend class="sr-only">Elija su paquete</legend>
-      {
-        paquetes.map((p, i) => (
-          <label class:list={['card', { 'card--featured': p.destacado }]} data-ss-card>
-            <input
-              class="sr-only"
-              type="radio"
-              name="paquete-card"
-              value={p.id}
-              checked={p.destacado}
-            />
-            <span class="card__rule" aria-hidden="true" />
-            <span class="card__top">
-              <span class="card__num">{String(i + 1).padStart(2, '0')}</span>
-              {p.destacado && <span class="card__badge">Más completo</span>}
-            </span>
-            <span class="card__name">
-              {p.siglas.map((s, j) => (
-                <>
-                  {j > 0 && <span class="card__plus"> + </span>}
-                  {s}
-                </>
-              ))}
-            </span>
-            <span class="card__desc">{p.descripcion}</span>
-            {p.precio && <span class="card__price">{p.precio}</span>}
-            <span class="card__choose">
-              <span class="card__radio" aria-hidden="true" />
-              <span class="card__choose-text"><span class="off">Elegir</span><span class="on">Elegido</span></span>
-            </span>
-          </label>
-        ))
-      }
-    </fieldset>
+    <div class="ss__stage" data-ss-stage>
+      <!-- El yantra de la cobertura: cada puerta es una afiliación. -->
+      <div class="ss__visual">
+        <div class:list={['ss__mandala', { 'is-full': lit.length === glosario.length }]} data-ss-mandala>
+          <span class="ss__halo" aria-hidden="true"></span>
+          <Yantra class="ss__yantra" lit={lit} />
+          <ul class="ss__gates" role="list" aria-label="Coberturas">
+            {
+              glosario.map((g) => (
+                <li class:list={['ss__gate', `ss__gate--${g.puerta}`, { 'is-lit': lit.includes(g.puerta) }]} data-gate-label={g.puerta}>
+                  <strong>{g.sigla}</strong>
+                  <span>{g.significado}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <p class="ss__status" aria-hidden="true">
+          <span data-ss-count>{lit.length}</span> de {glosario.length} coberturas
+        </p>
+      </div>
 
-    <div class="ss__foot">
-      <ul class="ss__glossary" role="list" aria-label="Glosario">
-        {
-          glosario.map((g) => (
-            <li>
-              <strong>{g.sigla}</strong> {g.significado.toLowerCase()}
-            </li>
-          ))
-        }
-      </ul>
-      <a class="btn btn--primary ss__cta" href="#contacto" data-area="seguridad-social" data-paquete="selected">
-        Cotizar mi paquete <span class="arrow">→</span>
-      </a>
+      <div class="ss__list">
+        <fieldset class="ss__cards" data-ss-cards>
+          <legend class="sr-only">Elija su paquete</legend>
+          {
+            paquetes.map((p, i) => (
+              <label class:list={['card', { 'card--featured': p.destacado }]} data-ss-card data-gates={puertas(p).join(' ')}>
+                <input class="sr-only" type="radio" name="paquete-card" value={p.id} checked={p === inicial} />
+                <span class="card__rule" aria-hidden="true" />
+                <span class="card__num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="card__body">
+                  {p.destacado && <span class="card__badge">Más completo</span>}
+                  <span class="card__name">
+                    {p.siglas.map((s, j) => (
+                      <>
+                        {j > 0 && <span class="card__plus"> + </span>}
+                        {s}
+                      </>
+                    ))}
+                  </span>
+                  <span class="card__desc">{p.descripcion}</span>
+                  {p.precio && <span class="card__price">{p.precio}</span>}
+                </span>
+                <span class="card__choose">
+                  <span class="card__radio" aria-hidden="true" />
+                  <span class="card__choose-text"><span class="off">Elegir</span><span class="on">Elegido</span></span>
+                </span>
+              </label>
+            ))
+          }
+        </fieldset>
+
+        <div class="ss__foot">
+          <a class="btn btn--primary ss__cta" href="#contacto" data-area="seguridad-social" data-paquete="selected">
+            Cotizar mi paquete <span class="arrow">→</span>
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -79,23 +97,14 @@ import Yantra from './Yantra.astro';
     position: relative;
     padding-block: clamp(5rem, 12vw, 10rem);
     isolation: isolate;
-    overflow: hidden;
+    overflow: hidden; /* respaldo */
+    overflow: clip; /* recorta sin crear contenedor de scroll: el yantra puede ser sticky */
   }
   .ss__bg {
     position: absolute;
     inset: 0;
     z-index: -1;
     background: var(--brand-dark-blue);
-  }
-  .ss__bg :global(.ss__watermark) {
-    position: absolute;
-    right: -18vw;
-    top: -10vw;
-    width: 70vw;
-    height: 70vw;
-    color: var(--text);
-    opacity: 0.05;
-    --yantra-stroke: 2px;
   }
   .ss__inner {
     display: flex;
@@ -108,22 +117,154 @@ import Yantra from './Yantra.astro';
     gap: 1.5rem;
   }
 
-  /* Tarjetas-radio */
-  .ss__cards {
+  /* ---------- Escenario: yantra fijo + paquetes que pasan ---------- */
+  .ss__stage {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1rem;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: clamp(2rem, 6vw, 6rem);
+    align-items: start;
+  }
+  .ss__visual {
+    position: sticky;
+    top: var(--nav-h);
+    height: calc(100vh - var(--nav-h));
+    height: calc(100svh - var(--nav-h));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+  .ss__mandala {
+    position: relative;
+    width: min(100%, 60svh, 440px);
+    aspect-ratio: 1;
+    padding: 2.75rem; /* aire para las etiquetas de las puertas */
+  }
+  .ss__mandala :global(.ss__yantra) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: rgba(217, 217, 217, 0.22);
+    --gate-color: rgba(217, 217, 217, 0.3);
+    --yantra-stroke: 1.1px;
+    --yantra-stroke-lit: 2px;
+  }
+  .ss__mandala :global(.y-core) {
+    transition: color 0.8s var(--ease-out);
+  }
+  .ss__mandala.is-full :global(.y-core) {
+    color: rgba(241, 209, 152, 0.75);
+  }
+  .ss__halo {
+    position: absolute;
+    inset: 12%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(241, 209, 152, 0.16) 0, rgba(241, 209, 152, 0.05) 40%, transparent 70%);
+    opacity: 0;
+    transform: scale(0.8);
+    transition:
+      opacity 0.9s var(--ease-out),
+      transform 0.9s var(--ease-out);
+    pointer-events: none;
+  }
+  .ss__mandala.is-full .ss__halo {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Etiquetas en cada puerta. */
+  .ss__gates {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ss__gate {
+    position: absolute;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5em;
+    white-space: nowrap;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    opacity: 0.45;
+    transition:
+      opacity 0.5s var(--ease-out),
+      color 0.5s var(--ease-out);
+  }
+  .ss__gate strong {
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--text);
+    transition: color 0.5s var(--ease-out);
+  }
+  .ss__gate.is-lit {
+    opacity: 1;
+  }
+  .ss__gate.is-lit strong {
+    color: var(--sand);
+  }
+  .ss__gate--n,
+  .ss__gate--s {
+    left: 50%;
+    translate: -50% 0;
+  }
+  .ss__gate--n {
+    top: 0;
+  }
+  .ss__gate--s {
+    bottom: 0;
+  }
+  .ss__gate--e,
+  .ss__gate--w {
+    top: 50%;
+    writing-mode: vertical-rl;
+  }
+  .ss__gate--e {
+    right: 0;
+    translate: 0 -50%;
+  }
+  .ss__gate--w {
+    left: 0;
+    translate: 0 -50%;
+    rotate: 180deg;
+  }
+  .ss__status {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .ss__status span {
+    color: var(--sand);
+  }
+
+  /* ---------- Paquetes ---------- */
+  .ss__list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2rem, 5vw, 3.5rem);
+    padding-block: 14vh 4vh;
+    padding-block: 14svh 4svh;
+  }
+  .ss__cards {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 7svh, 4.5rem);
     margin: 0;
     padding: 0;
     border: 0;
   }
   .card {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 1.75rem 1.5rem 1.5rem;
-    min-height: 280px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: clamp(1.25rem, 2.5vw, 2.25rem);
+    padding: clamp(1.5rem, 2.5vw, 2.25rem);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     background: rgba(10, 14, 21, 0.25);
@@ -131,14 +272,14 @@ import Yantra from './Yantra.astro';
     overflow: hidden;
     transition:
       transform 0.5s var(--ease-out),
+      opacity 0.6s var(--ease-out),
       border-color 0.4s var(--ease-out),
       background-color 0.4s var(--ease-out);
   }
   .card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
   }
   .card:has(input:checked) {
-    transform: translateY(-6px);
     border-color: var(--sand);
     background: var(--ink-3);
   }
@@ -154,17 +295,20 @@ import Yantra from './Yantra.astro';
     height: 1px;
     background: var(--sand);
     transform-origin: left;
-  }
-  .card__top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    transition: transform 0.9s var(--ease-out);
   }
   .card__num {
+    align-self: start;
     font-family: var(--font-display);
     font-weight: 900;
     font-size: 1.25rem;
     color: var(--sand);
+  }
+  .card__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
   .card__badge {
     font-size: 11px;
@@ -175,12 +319,12 @@ import Yantra from './Yantra.astro';
     border: 1px solid rgba(241, 209, 152, 0.5);
     border-radius: var(--pill);
     padding: 4px 10px;
+    margin-bottom: 0.25rem;
   }
   .card__name {
-    margin-top: 1rem;
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: clamp(1.4rem, 1.9vw, 1.9rem);
+    font-size: clamp(1.4rem, 2.2vw, 2.1rem);
     line-height: 1.05;
     letter-spacing: -0.01em;
   }
@@ -199,13 +343,14 @@ import Yantra from './Yantra.astro';
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: auto;
-    padding-top: 1rem;
-    border-top: 1px solid var(--line);
+    align-self: stretch;
+    padding-left: clamp(1.25rem, 2.5vw, 2.25rem);
+    border-left: 1px solid var(--line);
     font-size: 14px;
     font-weight: 500;
   }
   .card__radio {
+    flex: none;
     width: 16px;
     height: 16px;
     border-radius: 50%;
@@ -225,51 +370,106 @@ import Yantra from './Yantra.astro';
     color: var(--sand);
   }
 
-  .ss__foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem 3rem;
+  /* Con scroll animado: el paquete en foco se enciende; los demás esperan en penumbra. */
+  .ss__stage.is-live .card:not(.is-active) {
+    opacity: 0.42;
   }
-  .ss__glossary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem 1.75rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: 14px;
-    color: var(--text-dim);
+  .ss__stage.is-live .card:not(.is-active) .card__rule {
+    transform: scaleX(0);
   }
-  .ss__glossary strong {
-    color: var(--sand);
-    font-weight: 600;
-    margin-right: 0.3em;
+  .ss__stage.is-live .card.is-active:not(:has(input:checked)) {
+    border-color: rgba(241, 209, 152, 0.3);
   }
 
-  /* Móvil: carrusel con scroll-snap (CSS nativo). */
-  @media (max-width: 767px) {
-    .ss__cards {
-      display: flex;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      gap: 0.75rem;
-      margin-inline: calc(var(--gutter) * -1);
-      padding: 10px var(--gutter) 16px;
-      scroll-padding-inline: var(--gutter);
-      scrollbar-width: none;
+  .ss__foot {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* ---------- Tablet / móvil: el yantra queda arriba como barra compacta ---------- */
+  @media (max-width: 899px) {
+    .ss__stage {
+      grid-template-columns: minmax(0, 1fr);
     }
-    .ss__cards::-webkit-scrollbar {
+    .ss__visual {
+      z-index: 1;
+      height: auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-rows: 1fr auto auto 1fr;
+      grid-template-areas: 'yantra .' 'yantra gates' 'yantra status' 'yantra .';
+      align-items: center;
+      justify-content: stretch;
+      gap: 0.5rem 1.25rem;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 0.9rem var(--gutter);
+      background: var(--brand-dark-blue); /* los paquetes pasan por debajo */
+      border-bottom: 1px solid var(--line);
+    }
+    .ss__mandala {
+      display: contents;
+    }
+    .ss__mandala :global(.ss__yantra) {
+      grid-area: yantra;
+      width: clamp(72px, 22vw, 108px);
+      height: auto;
+      aspect-ratio: 1;
+    }
+    .ss__halo {
       display: none;
     }
+    .ss__gates {
+      grid-area: gates;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 1.5rem;
+    }
+    .ss__gate,
+    .ss__gate--n,
+    .ss__gate--s,
+    .ss__gate--e,
+    .ss__gate--w {
+      position: static;
+      translate: none;
+      rotate: none;
+      writing-mode: horizontal-tb;
+      min-width: 0;
+    }
+    .ss__status {
+      grid-area: status;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+    }
+    .ss__list {
+      padding-block: 1.5rem 0;
+    }
+    .ss__cards {
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 599px) {
     .card {
-      flex: 0 0 85%;
-      scroll-snap-align: start;
-      min-height: 240px;
+      grid-template-columns: auto minmax(0, 1fr);
+      row-gap: 1.25rem;
+    }
+    .card__choose {
+      grid-column: 1 / -1;
+      padding: 1rem 0 0;
+      border-left: 0;
+      border-top: 1px solid var(--line);
     }
     .ss__cta {
       width: 100%;
+    }
+  }
+  /* Teléfonos: solo las siglas (el significado ya está en cada paquete). */
+  @media (max-width: 479px) {
+    .ss__gate span {
+      display: none;
+    }
+    .ss__gates {
+      gap: 0.4rem 1.1rem;
     }
   }
 </style>
@@ -280,9 +480,35 @@ import Yantra from './Yantra.astro';
   import { revealLines } from '../animations/reveal';
 
   const root = document.querySelector<HTMLElement>('[data-ss]')!;
+  const stage = root.querySelector<HTMLElement>('[data-ss-stage]')!;
+  const mandala = root.querySelector<HTMLElement>('[data-ss-mandala]')!;
+  const count = root.querySelector<HTMLElement>('[data-ss-count]')!;
+  const list = root.querySelector<HTMLElement>('[data-ss-cards]')!;
+  const cards = [...root.querySelectorAll<HTMLElement>('[data-ss-card]')];
+  const gates = [...mandala.querySelectorAll<SVGGElement>('[data-gate]')];
+  const labels = [...mandala.querySelectorAll<HTMLElement>('[data-gate-label]')];
 
-  scene(4, ({ gsap, c }) => {
-    if (c.reduce) return; // aparición directa
+  /** Enciende en el yantra las puertas del paquete i. */
+  let active = -1;
+  function setActive(i: number) {
+    if (i === active) return;
+    active = i;
+    cards.forEach((c, k) => c.classList.toggle('is-active', k === i));
+    const lit = cards[i].dataset.gates!.split(' ');
+    gates.forEach((g) => g.classList.toggle('is-lit', lit.includes(g.dataset.gate!)));
+    labels.forEach((l) => l.classList.toggle('is-lit', lit.includes(l.dataset.gateLabel!)));
+    mandala.classList.toggle('is-full', lit.length === gates.length);
+    count.textContent = String(lit.length);
+  }
+
+  // Elegir un paquete también lo muestra en el yantra.
+  list.addEventListener('change', (e) => {
+    const i = cards.findIndex((c) => c.contains(e.target as Node));
+    if (i >= 0) setActive(i);
+  });
+
+  scene(4, ({ gsap, ScrollTrigger, c }) => {
+    if (c.reduce) return; // aparición directa; el yantra sigue la elección
 
     // Cortina: el fondo azul oscuro sube.
     gsap.fromTo(
@@ -296,18 +522,53 @@ import Yantra from './Yantra.astro';
     );
 
     revealLines(gsap, root.querySelector('.display')!, root, 'top 60%');
-    gsap.from(root.querySelectorAll('.ss__lead, .ss__foot'), {
+    gsap.from(root.querySelector('.ss__lead'), {
       y: 30,
       autoAlpha: 0,
       duration: DUR.base,
       ease: EASE.heavy,
-      stagger: 0.1,
       scrollTrigger: { trigger: root, start: 'top 55%', once: true },
     });
 
-    const cards = root.querySelectorAll('[data-ss-card]');
-    const tl = gsap.timeline({ scrollTrigger: { trigger: root.querySelector('[data-ss-cards]'), start: 'top 85%', once: true } });
-    tl.from(cards, { y: 60, autoAlpha: 0, duration: DUR.base, ease: EASE.heavy, stagger: 0.1, clearProps: 'transform' }, 0);
-    tl.from(root.querySelectorAll('.card__rule'), { scaleX: 0, duration: DUR.slow, ease: EASE.enter, stagger: 0.1 }, 0.3);
+    // El yantra se traza al llegar: primero las puertas, luego el centro.
+    const draw = gsap.timeline({ scrollTrigger: { trigger: stage, start: 'top 75%', once: true } });
+    draw
+      .from(mandala.querySelectorAll('.y-frame .y-draw'), { drawSVG: 0, duration: DUR.slow, ease: EASE.turn, stagger: 0.05 }, 0)
+      .from(mandala.querySelectorAll('.y-core .y-draw'), { drawSVG: 0, duration: DUR.slow, ease: EASE.turn, stagger: 0.02 }, 0.35)
+      .from(mandala.querySelector('.ss__gates'), { autoAlpha: 0, duration: DUR.base }, 0.6);
+
+    // Cada paquete entra al llegar.
+    cards.forEach((card) =>
+      gsap.from(card, {
+        y: 40,
+        autoAlpha: 0,
+        duration: DUR.base,
+        ease: EASE.heavy,
+        clearProps: 'transform,opacity,visibility',
+        scrollTrigger: { trigger: card, start: 'top 92%', once: true },
+      }),
+    );
+    gsap.from(root.querySelector('.ss__foot'), {
+      y: 20,
+      autoAlpha: 0,
+      duration: DUR.base,
+      ease: EASE.heavy,
+      scrollTrigger: { trigger: root.querySelector('.ss__foot'), start: 'top 92%', once: true },
+    });
+
+    // El paquete en foco (el que cruza el 60 % de la pantalla) enciende sus puertas.
+    // Un solo trigger: el tramo de la lista se reparte entre los paquetes. Nada corre por cuadro.
+    stage.classList.add('is-live');
+    const pick = (p: number) => setActive(Math.min(cards.length - 1, Math.floor(p * cards.length)));
+    const st = ScrollTrigger.create({
+      trigger: list,
+      start: 'top 60%',
+      end: 'bottom 60%',
+      onUpdate: (self) => pick(self.progress),
+      onRefresh: (self) => pick(self.progress),
+    });
+    pick(st.progress);
+
+    return () => stage.classList.remove('is-live');
   }, root);
 </script>

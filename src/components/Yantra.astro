@@ -15,8 +15,8 @@ interface Props {
   title?: string;
   /** Rotación estática en grados (p. ej. para la versión sin animación de las áreas). */
   rotate?: number;
-  /** Puerta encendida de entrada (n|e|s|w). */
-  lit?: string;
+  /** Puerta(s) encendida(s) de entrada (n|e|s|w). */
+  lit?: string | readonly string[];
   [key: `data-${string}`]: string | undefined;
 }
 
@@ -41,7 +41,7 @@ const { class: className, title, rotate = 0, lit, ...rest } = Astro.props;
       <g class="y-frame">
         {
           gates.map((g) => (
-            <g class:list={['y-gate', `y-gate--${g.id}`, { 'is-lit': lit === g.id }]} data-gate={g.id}>
+            <g class:list={['y-gate', `y-gate--${g.id}`, { 'is-lit': lit === g.id || (Array.isArray(lit) && lit.includes(g.id)) }]} data-gate={g.id}>
               <g transform={g.rot ? `rotate(${g.rot})` : undefined}>
                 <path class="y-draw" d={OUTER} />
                 <path class="y-draw" d={INNER} />
