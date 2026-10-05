@@ -10,6 +10,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-padding-top: var(--nav-h);
+  /* El preloader y el menú bloquean el scroll: sin esto la barra desaparece y vuelve, y la página
+     se corre unos 15 px en escritorio al soltarse (lo único que Lighthouse medía como CLS). */
+  scrollbar-gutter: stable;
 }
 
 /* Lenis controla el scroll suave; sin él, scroll nativo sin smooth para no pelear con los pins. */

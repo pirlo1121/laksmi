@@ -4,7 +4,10 @@ import { PRELOADER } from '../animations/constants';
 import { PORTAL_INSET, VIEWBOX } from '../data/yantra';
 
 const root = document.querySelector<HTMLElement>('[data-preloader]');
-const active = root && getComputedStyle(root).display !== 'none';
+// Las mismas clases que deciden su CSS (script en línea de Base.astro). Leerlas no fuerza un cálculo
+// de estilos de toda la página mientras carga, como hacía getComputedStyle (~50 ms en escritorio).
+const html = document.documentElement.classList;
+const active = root && html.contains('js') && !html.contains('no-preloader');
 
 if (!active) {
   root?.remove();
