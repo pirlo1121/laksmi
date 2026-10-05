@@ -43,6 +43,6 @@ scene(1, ({ gsap, c }) => {
     defaults: { ease: EASE.scrub },
     scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
   });
-  tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.45 : 1.3, duration: 1, force3D: true }, 0);
+  tl.fromTo(img, { scale: 1 }, { scale: c.desktop ? 1.45 : 1.55, duration: 1, force3D: true }, 0);
   tl.fromTo(shade, { opacity: 0 }, { opacity: 0.6, duration: 0.45 }, 0.55);
 });
