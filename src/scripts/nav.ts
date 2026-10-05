@@ -3,7 +3,7 @@ import { lockScroll, scene } from '../animations/setup';
 
 const header = document.querySelector<HTMLElement>('[data-nav]')!;
 const burger = header.querySelector<HTMLButtonElement>('[data-burger]')!;
-const menu = header.querySelector<HTMLElement>('[data-menu]')!;
+const menu = document.querySelector<HTMLElement>('[data-menu]')!;
 
 /* ---- Menú móvil (funciona sin GSAP) ---- */
 function setMenu(open: boolean) {

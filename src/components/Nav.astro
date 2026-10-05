@@ -32,24 +32,27 @@ import { contacto, nav } from '../data/site';
       <span></span><span></span>
     </button>
   </nav>
-
-  <div class="menu" id="menu-movil" data-menu hidden>
-    <ul class="menu__links" role="list">
-      {
-        nav.map((l) => (
-          <li class="mask">
-            <a href={l.href} data-menu-link>
-              {l.label}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
-    <a class="btn btn--outline menu__wa" href={contacto.whatsappLink} target="_blank" rel="noopener">
-      WhatsApp · {contacto.whatsapp}
-    </a>
-  </div>
 </header>
+
+<!-- Fuera del header a propósito: el header lleva transform (se oculta al bajar) y backdrop-filter,
+     y cualquiera de los dos convierte al header en el contenedor de un hijo fixed. Dentro, el menú
+     medía 72 px de alto y sus enlaces quedaban sin fondo sobre la página. -->
+<div class="menu" id="menu-movil" data-menu hidden>
+  <ul class="menu__links" role="list">
+    {
+      nav.map((l) => (
+        <li class="mask">
+          <a href={l.href} data-menu-link>
+            {l.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <a class="btn btn--outline menu__wa" href={contacto.whatsappLink} target="_blank" rel="noopener">
+    WhatsApp · {contacto.whatsapp}
+  </a>
+</div>
 
 <style>
   .nav {
@@ -138,7 +141,7 @@ import { contacto, nav } from '../data/site';
   .menu {
     position: fixed;
     inset: 0;
-    z-index: -1;
+    z-index: 799; /* justo bajo la barra (800): el botón de cerrar queda encima */
     background: var(--ink);
     padding: calc(var(--nav-h) + 2rem) var(--gutter) 2rem;
     display: flex;
